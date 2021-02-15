@@ -10,7 +10,8 @@ from PIL import Image
 from io import BytesIO
 
 from ADC_function import *
-from file_mgmt import create_folder
+from lib.file_mgmt import create_folder
+from lib.tag_processor import process_tags
 
 # =========website========
 from WebCrawler import airav
@@ -145,7 +146,7 @@ def get_data_from_json(file_number, filepath, conf: config.Config):  # 从JSON�
         extrafanart = json_data.get('extrafanart')
     
     imagecut = json_data.get('imagecut')
-    tag = str(json_data.get('tag')).strip("[ ]").replace("'", '').replace(" ", '').split(',')  # 字符串转列表 @
+    tag = process_tags(json_data.get('tag'), conf.transalte_to_sc())
     actor = str(actor_list).strip("[ ]").replace("'", '').replace(" ", '')
 
     if title == '' or number == '':
@@ -434,6 +435,11 @@ def print_files(path, c_word, naming_rule, part, cn_sub, json_data, filepath, fa
             print("<movie>", file=code)
             print(" <title>" + naming_rule + "</title>", file=code)
             print("  <set>", file=code)
+            if series:
+                print(f"""
+                <name>{series}</name>
+                <overview/>
+                """, file=code)
             print("  </set>", file=code)
             print("  <studio>" + studio + "</studio>", file=code)
             print("  <year>" + year + "</year>", file=code)
@@ -460,12 +466,20 @@ def print_files(path, c_word, naming_rule, part, cn_sub, json_data, filepath, fa
             try:
                 for i in tag:
                     print("  <tag>" + i + "</tag>", file=code)
-                print("  <tag>" + series + "</tag>", file=code)
+                if series:
+                    print("  <tag>" + "系列:" + series + "</tag>", file=code)
+                if studio:
+                    print("  <tag>" + "片商:" + studio + "</tag>", file=code)
+
             except:
                 aaaaa = ''
             try:
                 for i in tag:
                     print("  <genre>" + i + "</genre>", file=code)
+                if series:
+                    print("  <genre>" + "系列:" + series + "</genre>", file=code)
+                if studio:
+                    print("  <genre>" + "片商:" + studio + "</genre>", file=code)
             except:
                 aaaaaaaa = ''
             if cn_sub == '1':
@@ -476,6 +490,8 @@ def print_files(path, c_word, naming_rule, part, cn_sub, json_data, filepath, fa
             if config.Config().is_trailer():
                 print("  <trailer>" + trailer + "</trailer>", file=code)
             print("  <website>" + website + "</website>", file=code)
+            print(f"""  <original_filename>{os.path.basename(filepath)}</original_filename>""", file=code)
+
             print("</movie>", file=code)
             print("[+]Wrote!            " + path + "/" + number + part + c_word + ".nfo")
     except IOError as e:
@@ -737,8 +753,6 @@ def core_main(file_path, number_th, conf: config.Config):
         print_files(path, c_word,  json_data.get('naming_rule'), part, cn_sub, json_data, filepath, conf.failed_folder(), tag,  json_data.get('actor_list'), liuchu)
 
         # 移动文件
-        logging.debug(filepath)
-        logging.debug(path)
         paste_file_to_folder(filepath, path, number, c_word, conf)
         
         poster_path = path + '/' + number + c_word + '-poster.jpg'

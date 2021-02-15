@@ -5,13 +5,14 @@ import re
 import sys
 import shutil
 import logging
+from pathlib import Path
 
 import config
 from ADC_function import get_html
-from file_mgmt import create_success_failed_folder,rm_empty_success_failed_folder
+from lib.file_mgmt import create_success_failed_folder,rm_empty_success_failed_folder
 from number_parser import get_number
 from core import core_main
-from ux import dir_picker
+from lib import dir_picker
 
 
 def check_update(local_version):
@@ -159,9 +160,12 @@ if __name__ == '__main__':
         if not folder_path:
             folder_path = dir_picker.dir_picker()
         conf.folder_path = folder_path
+    if not conf.folder_path:
+        logging.error('无法定位根文件夹。')
+        sys.exit(0)
 
     if not create_success_failed_folder(conf):
-         sys.exit(0)
+        sys.exit(0)
 
     if single_file_path: #Single File
         print('[+]==================== Single File =====================')

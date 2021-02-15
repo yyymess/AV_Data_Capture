@@ -7,6 +7,7 @@ import time
 from lxml import etree
 import re
 import config
+import logging
 
 SUPPORT_PROXY_TYPE = ("http", "socks5", "socks5h")
 
@@ -127,16 +128,8 @@ def get_javlib_cookie() -> [dict, str]:
 
     return raw_cookie, user_agent
 
-def translateTag_to_sc(tag):
-    tranlate_to_sc = config.Config().transalte_to_sc()
-    if tranlate_to_sc:
-        dict_gen = {
-            'パイパン': '白虎'
-        }
-        if tag in dict_gen:
-            return dict_gen[tag]
-    else:
-        return tag
+def translateTag_to_sc(tag) -> str:
+    return tag
 
 def translate(
     src: str,
