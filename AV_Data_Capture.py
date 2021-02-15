@@ -9,6 +9,7 @@ import config
 from ADC_function import get_html
 from number_parser import get_number
 from core import core_main
+from ux import dir_picker
 
 
 def check_update(local_version):
@@ -160,7 +161,7 @@ if __name__ == '__main__':
         create_data_and_move_with_custom_number(single_file_path, conf, custom_number)
     else:
         if folder_path == '':
-            folder_path = os.path.abspath(".")
+            folder_path = dir_picker.dir_picker()
 
         movie_list = movie_lists(folder_path, re.split("[,，]", conf.escape_folder()))
 
