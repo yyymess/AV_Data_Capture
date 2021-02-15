@@ -416,10 +416,10 @@ def print_rating_entries(file_handle, json_data) -> None:
     rating = json_data.get('rating')
     source = json_data.get('rating_source') or 'NFO'
     count = json_data.get('rating_count')
-    max = json_data.get('rating_max')
-    if rating and max:
+    max_rating = json_data.get('rating_max')
+    if rating and float(rating) > 0 and max_rating:
         print('  <ratings>', file=file_handle)
-        print(f'    <rating default="true" max="{max}" name="{source}">', file=file_handle)
+        print(f'    <rating default="true" max="{max_rating}" name="{source}">', file=file_handle)
         print(f'      <value>{rating}</value>', file=file_handle)
         if count:
             print(f'      <votes>{count}</votes>', file=file_handle)
