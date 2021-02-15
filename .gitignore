@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+.#*
 
 # C extensions
 *.so
@@ -109,3 +110,6 @@ venv.bak/
 # success/failed folder
 JAV_output/**/*
 failed/*
+
+# emacs tmp
+\#*#

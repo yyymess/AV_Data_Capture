@@ -71,6 +71,7 @@ def getTag(a):
             total.append(translateTag_to_sc(i))
         except:
             pass
+    total.append('日本')
     return total
 def getCover(htmlcode):
     html = etree.fromstring(htmlcode, etree.HTMLParser())
@@ -107,6 +108,18 @@ def getExtrafanart(htmlcode):  # 获取剧照
             return extrafanart_imgs
     return ''
 
+def get_rating(htmlcode):
+    html = etree.fromstring(htmlcode, etree.HTMLParser())  # //table/tr[1]/td[1]/text()
+    result = html.xpath('//th[contains(text(),"評価")]/../td/text()')
+    result = ''.join([i.strip() for i in result])
+    return result[:3]
+
+def get_rating_count(htmlcode):
+    html = etree.fromstring(htmlcode, etree.HTMLParser())  # //table/tr[1]/td[1]/text()
+    result = html.xpath('//th[contains(text(),"評価")]/../td/text()')
+    result = ''.join([i.strip() for i in result])
+    return result[4:].split(' ')[0]
+
 def main(number2):
     number=number2.upper()
     htmlcode=str(get_html('https://www.mgstage.com/product/product_detail/'+str(number)+'/',cookies={'adc':'1'}))
@@ -133,10 +146,14 @@ def main(number2):
         'website':'https://www.mgstage.com/product/product_detail/'+str(number)+'/',
         'source': 'mgstage.py',
         'series': getSeries(a),
+        'rating': get_rating(a),
+        'rating_count': get_rating_count(a),
+        'rating_max': '5',
+        'rating_source': 'mgstage'
     }
     js = json.dumps(dic, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ':'), )  # .encode('UTF-8')
     return js
     #print(htmlcode)
 
 if __name__ == '__main__':
-    print(main('SIRO-4149'))
+    print(main('SIRO-4384'))

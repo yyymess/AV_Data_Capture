@@ -23,6 +23,9 @@ class Config:
                 print("[-]",e)
                 self.conf = self._default_config()
 
+        # TODO adding this here for now.
+        self.folder_path = os.path.abspath(".")
+
     def main_mode(self) -> str:
         try:
             return self.conf.getint("common", "main_mode")

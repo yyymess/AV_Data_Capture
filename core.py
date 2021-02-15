@@ -1,14 +1,17 @@
 import json
+import os
 import os.path
 import pathlib
 import re
 import shutil
-import platform
+import logging
 
 from PIL import Image
 from io import BytesIO
 
 from ADC_function import *
+from lib.file_mgmt import create_folder
+from lib.tag_processor import process_tags
 
 # =========website========
 from WebCrawler import airav
@@ -116,6 +119,7 @@ def get_data_from_json(file_number, filepath, conf: config.Config):  # 从JSON�
     title = json_data.get('title')
     actor_list = str(json_data.get('actor')).strip("[ ]").replace("'", '').split(',')  # 字符串转列表
     actor_list = [actor.strip() for actor in actor_list]  # 去除空白
+    first_actor = actor_list[0]
     release = json_data.get('release')
     number = json_data.get('number')
     studio = json_data.get('studio')
@@ -142,7 +146,7 @@ def get_data_from_json(file_number, filepath, conf: config.Config):  # 从JSON�
         extrafanart = json_data.get('extrafanart')
     
     imagecut = json_data.get('imagecut')
-    tag = str(json_data.get('tag')).strip("[ ]").replace("'", '').replace(" ", '').split(',')  # 字符串转列表 @
+    tag = process_tags(json_data.get('tag'), conf.transalte_to_sc())
     actor = str(actor_list).strip("[ ]").replace("'", '').replace(" ", '')
 
     if title == '' or number == '':
@@ -218,6 +222,7 @@ def get_data_from_json(file_number, filepath, conf: config.Config):  # 从JSON�
         location_rule = location_rule.replace(title, shorttitle)
 
     # 返回处理后的json_data
+    json_data['first_actor'] = first_actor
     json_data['title'] = title
     json_data['actor'] = actor
     json_data['release'] = release
@@ -299,33 +304,6 @@ def small_cover_check(path, number, cover_small, c_word, conf: config.Config, fi
     print('[+]Image Downloaded! ' + path + '/' + number + c_word + '-poster.jpg')
 
 
-def create_folder(success_folder, location_rule, json_data, conf: config.Config):  # 创建文件夹
-    title, studio, year, outline, runtime, director, actor_photo, release, number, cover, trailer, website, series, label = get_info(json_data)
-    if len(location_rule) > 240:  # 新建成功输出文件夹
-        path = success_folder + '/' + location_rule.replace("'actor'", "'manypeople'", 3).replace("actor","'manypeople'",3)  # path为影片+元数据所在目录
-    else:
-        path = success_folder + '/' + location_rule
-    path = trimblank(path)
-    if not os.path.exists(path):
-        path = escape_path(path, conf.escape_literals())
-        try:
-            os.makedirs(path)
-        except:
-            path = success_folder + '/' + location_rule.replace('/[' + number + ')-' + title, "/number")
-            path = escape_path(path, conf.escape_literals())
-
-            os.makedirs(path)
-    return path
-
-
-def trimblank(s: str):
-    """
-    Clear the blank on the right side of the folder name
-    """
-    if s[-1] == " ":
-        return trimblank(s[:-1])
-    else:
-        return s
 
 # =====================资源下载部分===========================
 
@@ -434,6 +412,19 @@ def image_download(cover, number, c_word, path, conf: config.Config, filepath, f
     print('[+]Image Downloaded!', path + '/' + number + c_word + '-fanart.jpg')
     shutil.copyfile(path + '/' + number + c_word + '-fanart.jpg',path + '/' + number + c_word + '-thumb.jpg')
 
+def print_rating_entries(file_handle, json_data) -> None:
+    rating = json_data.get('rating')
+    source = json_data.get('rating_source') or 'NFO'
+    count = json_data.get('rating_count')
+    max_rating = json_data.get('rating_max')
+    if rating and float(rating) > 0 and max_rating:
+        print('  <ratings>', file=file_handle)
+        print(f'    <rating default="true" max="{max_rating}" name="{source}">', file=file_handle)
+        print(f'      <value>{rating}</value>', file=file_handle)
+        if count:
+            print(f'      <votes>{count}</votes>', file=file_handle)
+        print('    </rating>', file=file_handle)
+        print('  </ratings>', file=file_handle)
 
 def print_files(path, c_word, naming_rule, part, cn_sub, json_data, filepath, failed_folder, tag, actor_list, liuchu):
     title, studio, year, outline, runtime, director, actor_photo, release, number, cover, trailer, website, series, label = get_info(json_data)
@@ -446,9 +437,15 @@ def print_files(path, c_word, naming_rule, part, cn_sub, json_data, filepath, fa
             print("<movie>", file=code)
             print(" <title>" + naming_rule + "</title>", file=code)
             print("  <set>", file=code)
+            if series:
+                print(f"""
+                <name>{series}</name>
+                <overview/>
+                """, file=code)
             print("  </set>", file=code)
             print("  <studio>" + studio + "</studio>", file=code)
             print("  <year>" + year + "</year>", file=code)
+            print_rating_entries(code, json_data)
             print("  <outline>" + outline + "</outline>", file=code)
             print("  <plot>" + outline + "</plot>", file=code)
             print("  <runtime>" + str(runtime).replace(" ", "") + "</runtime>", file=code)
@@ -472,12 +469,20 @@ def print_files(path, c_word, naming_rule, part, cn_sub, json_data, filepath, fa
             try:
                 for i in tag:
                     print("  <tag>" + i + "</tag>", file=code)
-                print("  <tag>" + series + "</tag>", file=code)
+                if series:
+                    print("  <tag>" + "系列:" + series + "</tag>", file=code)
+                if studio:
+                    print("  <tag>" + "片商:" + studio + "</tag>", file=code)
+
             except:
                 aaaaa = ''
             try:
                 for i in tag:
                     print("  <genre>" + i + "</genre>", file=code)
+                if series:
+                    print("  <genre>" + "系列:" + series + "</genre>", file=code)
+                if studio:
+                    print("  <genre>" + "片商:" + studio + "</genre>", file=code)
             except:
                 aaaaaaaa = ''
             if cn_sub == '1':
@@ -488,6 +493,8 @@ def print_files(path, c_word, naming_rule, part, cn_sub, json_data, filepath, fa
             if config.Config().is_trailer():
                 print("  <trailer>" + trailer + "</trailer>", file=code)
             print("  <website>" + website + "</website>", file=code)
+            print(f"""  <original_filename>{os.path.basename(filepath)}</original_filename>""", file=code)
+
             print("</movie>", file=code)
             print("[+]Wrote!            " + path + "/" + number + part + c_word + ".nfo")
     except IOError as e:
@@ -714,9 +721,6 @@ def core_main(file_path, number_th, conf: config.Config):
     if conf.debug():
         debug_print(json_data)
 
-    # 创建文件夹
-    #path = create_folder(rootpath + '/' + conf.success_folder(),  json_data.get('location_rule'), json_data, conf)
-
     # main_mode
     #  1: 刮削模式 / Scraping mode
     #  2: 整理模式 / Organizing mode
@@ -748,7 +752,6 @@ def core_main(file_path, number_th, conf: config.Config):
             pass
         # 裁剪图
         cutImage(imagecut, path, number, c_word)
-
         # 打印文件
         print_files(path, c_word,  json_data.get('naming_rule'), part, cn_sub, json_data, filepath, conf.failed_folder(), tag,  json_data.get('actor_list'), liuchu)
 
