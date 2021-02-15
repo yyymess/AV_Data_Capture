@@ -305,17 +305,6 @@ def small_cover_check(path, number, cover_small, c_word, conf: config.Config, fi
 
 
 
-
-
-def trimblank(s: str):
-    """
-    Clear the blank on the right side of the folder name
-    """
-    if s[-1] == " ":
-        return trimblank(s[:-1])
-    else:
-        return s
-
 # =====================资源下载部分===========================
 
 # path = examle:photo , video.in the Project Folder!
@@ -423,6 +412,19 @@ def image_download(cover, number, c_word, path, conf: config.Config, filepath, f
     print('[+]Image Downloaded!', path + '/' + number + c_word + '-fanart.jpg')
     shutil.copyfile(path + '/' + number + c_word + '-fanart.jpg',path + '/' + number + c_word + '-thumb.jpg')
 
+def print_rating_entries(file_handle, json_data) -> None:
+    rating = json_data.get('rating')
+    source = json_data.get('rating_source') or 'NFO'
+    count = json_data.get('rating_count')
+    max = json_data.get('rating_max')
+    if rating and max:
+        print('  <ratings>', file=file_handle)
+        print(f'    <rating default="true" max="{max}" name="{source}">', file=file_handle)
+        print(f'      <value>{rating}</value>', file=file_handle)
+        if count:
+            print(f'      <votes>{count}</votes>', file=file_handle)
+        print('    </rating>', file=file_handle)
+        print('  </ratings>', file=file_handle)
 
 def print_files(path, c_word, naming_rule, part, cn_sub, json_data, filepath, failed_folder, tag, actor_list, liuchu):
     title, studio, year, outline, runtime, director, actor_photo, release, number, cover, trailer, website, series, label = get_info(json_data)
@@ -443,6 +445,7 @@ def print_files(path, c_word, naming_rule, part, cn_sub, json_data, filepath, fa
             print("  </set>", file=code)
             print("  <studio>" + studio + "</studio>", file=code)
             print("  <year>" + year + "</year>", file=code)
+            print_rating_entries(code, json_data)
             print("  <outline>" + outline + "</outline>", file=code)
             print("  <plot>" + outline + "</plot>", file=code)
             print("  <runtime>" + str(runtime).replace(" ", "") + "</runtime>", file=code)
