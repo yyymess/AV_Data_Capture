@@ -1,14 +1,16 @@
 import json
+import os
 import os.path
 import pathlib
 import re
 import shutil
-import platform
+import logging
 
 from PIL import Image
 from io import BytesIO
 
 from ADC_function import *
+from file_mgmt import create_folder
 
 # =========website========
 from WebCrawler import airav
@@ -301,23 +303,7 @@ def small_cover_check(path, number, cover_small, c_word, conf: config.Config, fi
     print('[+]Image Downloaded! ' + path + '/' + number + c_word + '-poster.jpg')
 
 
-def create_folder(success_folder, location_rule, json_data, conf: config.Config):  # 创建文件夹
-    title, studio, year, outline, runtime, director, actor_photo, release, number, cover, trailer, website, series, label = get_info(json_data)
-    if len(location_rule) > 240:  # 新建成功输出文件夹
-        path = success_folder + '/' + location_rule.replace("'actor'", "'manypeople'", 3).replace("actor","'manypeople'",3)  # path为影片+元数据所在目录
-    else:
-        path = success_folder + '/' + location_rule
-    path = trimblank(path)
-    if not os.path.exists(path):
-        path = escape_path(path, conf.escape_literals())
-        try:
-            os.makedirs(path)
-        except:
-            path = success_folder + '/' + location_rule.replace('/[' + number + ')-' + title, "/number")
-            path = escape_path(path, conf.escape_literals())
 
-            os.makedirs(path)
-    return path
 
 
 def trimblank(s: str):
@@ -716,9 +702,6 @@ def core_main(file_path, number_th, conf: config.Config):
     if conf.debug():
         debug_print(json_data)
 
-    # 创建文件夹
-    #path = create_folder(rootpath + '/' + conf.success_folder(),  json_data.get('location_rule'), json_data, conf)
-
     # main_mode
     #  1: 刮削模式 / Scraping mode
     #  2: 整理模式 / Organizing mode
@@ -750,11 +733,12 @@ def core_main(file_path, number_th, conf: config.Config):
             pass
         # 裁剪图
         cutImage(imagecut, path, number, c_word)
-
         # 打印文件
         print_files(path, c_word,  json_data.get('naming_rule'), part, cn_sub, json_data, filepath, conf.failed_folder(), tag,  json_data.get('actor_list'), liuchu)
 
         # 移动文件
+        logging.debug(filepath)
+        logging.debug(path)
         paste_file_to_folder(filepath, path, number, c_word, conf)
         
         poster_path = path + '/' + number + c_word + '-poster.jpg'

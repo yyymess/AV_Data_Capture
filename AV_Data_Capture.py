@@ -4,9 +4,11 @@ import os
 import re
 import sys
 import shutil
+import logging
 
 import config
 from ADC_function import get_html
+from file_mgmt import create_success_failed_folder,rm_empty_success_failed_folder
 from number_parser import get_number
 from core import core_main
 from ux import dir_picker
@@ -59,13 +61,6 @@ def movie_lists(root, escape_folder):
     return total
 
 
-def create_failed_folder(failed_folder):
-    if not os.path.exists(failed_folder + '/'):  # 新建failed文件夹
-        try:
-            os.makedirs(failed_folder + '/')
-        except:
-            print("[-]failed!can not be make folder 'failed'\n[-](Please run as Administrator)")
-            sys.exit(0)
 
 
 def rm_empty_folder(path):
@@ -151,18 +146,27 @@ if __name__ == '__main__':
 
     if conf.debug():
         print('[+]Enable debug')
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
     if conf.soft_link():
         print('[!]Enable soft link')
 
-    create_failed_folder(conf.failed_folder())
 
-    if not single_file_path == '': #Single File
+    if single_file_path:
+        conf.folder_path = os.path.basename(single_file_path)
+    else:
+        if not folder_path:
+            folder_path = dir_picker.dir_picker()
+        conf.folder_path = folder_path
+
+    if not create_success_failed_folder(conf):
+         sys.exit(0)
+
+    if single_file_path: #Single File
         print('[+]==================== Single File =====================')
         create_data_and_move_with_custom_number(single_file_path, conf, custom_number)
     else:
-        if folder_path == '':
-            folder_path = dir_picker.dir_picker()
-
         movie_list = movie_lists(folder_path, re.split("[,，]", conf.escape_folder()))
 
         count = 0
@@ -174,8 +178,7 @@ if __name__ == '__main__':
             print('[!] - ' + percentage + ' [' + str(count) + '/' + count_all + '] -')
             create_data_and_move(movie_path, conf, conf.debug())
 
-    rm_empty_folder(conf.success_folder())
-    rm_empty_folder(conf.failed_folder())
+    rm_empty_success_failed_folder(conf)
     print("[+]All finished!!!")
     if not (conf.auto_exit() or auto_exit):
         input("Press enter key exit, you can check the error message before you exit...")
