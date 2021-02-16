@@ -10,8 +10,10 @@ from PIL import Image
 from io import BytesIO
 
 from ADC_function import *
-from lib.file_mgmt import create_folder
-from lib.tag_processor import process_tags
+from avdc.config import Config
+from model.movie import Movie
+from util.file_mgmt import create_folder
+from util.tag_processor import process_tags
 
 # =========website========
 from WebCrawler import airav
@@ -35,11 +37,12 @@ def escape_path(path, escape_literals: str):  # Remove escape literals
 
 
 def moveFailedFolder(filepath, failed_folder):
-    if config.Config().failed_move():
+    config = Config.get_instance()
+    if config.failed_move():
         root_path = str(pathlib.Path(filepath).parent)
         file_name = pathlib.Path(filepath).name
         destination_path = root_path + '/' + failed_folder + '/'
-        if config.Config().soft_link():
+        if config.soft_link():
             print('[-]Create symlink to Failed output folder')
             os.symlink(filepath, destination_path + '/' + file_name)
         else:
@@ -48,7 +51,7 @@ def moveFailedFolder(filepath, failed_folder):
     return
 
 
-def get_data_from_json(file_number, filepath, conf: config.Config):  # 从JSON返回元数据
+def get_data_from_json(file_number, filepath, conf: Config):  # 从JSON返回元数据
     """
     iterate through all services and fetch the data 
     """
@@ -116,121 +119,50 @@ def get_data_from_json(file_number, filepath, conf: config.Config):  # 从JSON�
 
     # ================================================网站规则添加结束================================================
 
-    title = json_data.get('title')
-    actor_list = str(json_data.get('actor')).strip("[ ]").replace("'", '').split(',')  # 字符串转列表
-    actor_list = [actor.strip() for actor in actor_list]  # 去除空白
-    first_actor = actor_list[0]
-    release = json_data.get('release')
-    number = json_data.get('number')
-    studio = json_data.get('studio')
-    source = json_data.get('source')
-    runtime = json_data.get('runtime')
-    outline = json_data.get('outline')
-    label = json_data.get('label')
-    series = json_data.get('series')
-    year = json_data.get('year')
+    movie = Movie()
+    movie.title = json_data.get('title')
+    movie.actors = json_data.get('actor')
+    movie.release = json_data.get('release')
+    movie.cover_small = json_data.get('cover_small')
+    movie.cover = json_data.get('cover')
+    movie.tags = json_data.get('tag')
+    movie.year = json_data.get('year')
+    movie.series = json_data.get('series')
+    movie.runtime = json_data.get('runtime')
+    movie.outline = json_data.get('outline')
+    movie.scraper_source = json_data.get('source')
+    movie.label = json_data.get('label')
+    movie.studio = json_data.get('studio')
+    movie.director = json_data.get('director')
+    movie.movie_id = json_data.get('number')
+    movie.trailer = json_data.get('trailer')
+    movie.website = json_data.get('website')
+    movie.imagecut = json_data.get('imagecut')
+    movie.extra_fanart = json_data.get('extrafanart')
 
-    if json_data.get('cover_small') == None:
-        cover_small = ''
-    else:
-        cover_small = json_data.get('cover_small')
-    
-    if json_data.get('trailer') == None:
-        trailer = ''
-    else:
-        trailer = json_data.get('trailer')
-        
-    if json_data.get('extrafanart') == None:
-        extrafanart = ''
-    else:
-        extrafanart = json_data.get('extrafanart')
-    
-    imagecut = json_data.get('imagecut')
-    tag = process_tags(json_data.get('tag'), conf.transalte_to_sc())
-    actor = str(actor_list).strip("[ ]").replace("'", '').replace(" ", '')
-
-    if title == '' or number == '':
+    if movie.title == '' or movie.movie_id == '':
         print('[-]Movie Data not found!')
         moveFailedFolder(filepath, conf.failed_folder())
         return
 
-    # if imagecut == '3':
-    #     DownloadFileWithFilename()
-
-    # ====================处理异常字符====================== #\/:*?"<>|
-    title = title.replace('\\', '')
-    title = title.replace('/', '')
-    title = title.replace(':', '')
-    title = title.replace('*', '')
-    title = title.replace('?', '')
-    title = title.replace('"', '')
-    title = title.replace('<', '')
-    title = title.replace('>', '')
-    title = title.replace('|', '')
-    release = release.replace('/', '-')
-    tmpArr = cover_small.split(',')
-    if len(tmpArr) > 0:
-        cover_small = tmpArr[0].strip('\"').strip('\'')
-
-    # ====================处理异常字符 END================== #\/:*?"<>|
-
-    # ===  替换Studio片假名
-    studio = studio.replace('アイエナジー','Energy')
-    studio = studio.replace('アイデアポケット','Idea Pocket')
-    studio = studio.replace('アキノリ','AKNR')
-    studio = studio.replace('アタッカーズ','Attackers')
-    studio = re.sub('アパッチ.*','Apache',studio)
-    studio = studio.replace('アマチュアインディーズ','SOD')
-    studio = studio.replace('アリスJAPAN','Alice Japan')
-    studio = studio.replace('オーロラプロジェクト・アネックス','Aurora Project Annex')
-    studio = studio.replace('クリスタル映像','Crystal 映像')
-    studio = studio.replace('グローリークエスト','Glory Quest')
-    studio = studio.replace('ダスッ！','DAS！')
-    studio = studio.replace('ディープス','DEEP’s')
-    studio = studio.replace('ドグマ','Dogma')
-    studio = studio.replace('プレステージ','PRESTIGE')
-    studio = studio.replace('ムーディーズ','MOODYZ')
-    studio = studio.replace('メディアステーション','宇宙企画')
-    studio = studio.replace('ワンズファクトリー','WANZ FACTORY')
-    studio = studio.replace('エスワン ナンバーワンスタイル','S1')
-    studio = studio.replace('エスワンナンバーワンスタイル','S1')
-    studio = studio.replace('SODクリエイト','SOD')
-    studio = studio.replace('サディスティックヴィレッジ','SOD')
-    studio = studio.replace('V＆Rプロダクツ','V＆R PRODUCE')
-    studio = studio.replace('V＆RPRODUCE','V＆R PRODUCE')
-    studio = studio.replace('レアルワークス','Real Works')
-    studio = studio.replace('マックスエー','MAX-A')
-    studio = studio.replace('ピーターズMAX','PETERS MAX')
-    studio = studio.replace('プレミアム','PREMIUM')
-    studio = studio.replace('ナチュラルハイ','NATURAL HIGH')
-    studio = studio.replace('マキシング','MAXING')
-    studio = studio.replace('エムズビデオグループ','M’s Video Group')
-    studio = studio.replace('ミニマム','Minimum')
-    studio = studio.replace('ワープエンタテインメント','WAAP Entertainment')
-    studio = re.sub('.*/妄想族','妄想族',studio)
-    studio = studio.replace('/',' ')
-    # ===  替换Studio片假名 END
-    
-    location_rule = eval(conf.location_rule())
-
-    if 'actor' in conf.location_rule() and len(actor) > 100:
-        print(conf.location_rule())
-        location_rule = eval(conf.location_rule().replace("actor","'多人作品'"))
-    maxlen = conf.max_title_len()
-    if 'title' in conf.location_rule() and len(title) > maxlen:
-        shorttitle = title[0:maxlen]
-        location_rule = location_rule.replace(title, shorttitle)
-
     # 返回处理后的json_data
-    json_data['first_actor'] = first_actor
-    json_data['title'] = title
-    json_data['actor'] = actor
-    json_data['release'] = release
-    json_data['cover_small'] = cover_small
-    json_data['tag'] = tag
-    json_data['location_rule'] = location_rule
-    json_data['year'] = year
-    json_data['actor_list'] = actor_list
+    json_data['first_actor'] = movie.first_actor
+    json_data['title'] = movie.title
+    json_data['actor'] = ','.join(movie.actors)
+    json_data['release'] = movie.release
+    json_data['cover_small'] = movie.cover_small
+    json_data['tag'] = movie.tags
+    json_data['location_rule'] = movie.storage_dir
+    json_data['naming_rule'] = movie.storage_fname
+    json_data['year'] = movie.year
+    json_data['studio'] = movie.studio
+    json_data['actor_list'] = movie.actors
+    json_data['extrafanart'] = movie.extra_fanart
+    json_data['trailer'] = movie.trailer
+    json_data['movie_obj'] = movie
+
+    """
+    TODO:  翻译以后再说
     if conf.is_transalte():
         translate_values = conf.transalte_values().split(",")
         for translate_value in translate_values:
@@ -254,30 +186,9 @@ def get_data_from_json(file_number, filepath, conf: config.Config):  # 从JSON�
                 )
             else:
                 json_data[translate_value] = translate(json_data[translate_value])
+    """
 
-    if conf.is_trailer():
-        if trailer:
-            json_data['trailer'] = trailer
-        else:
-            json_data['trailer'] = ''
-    else:
-        json_data['trailer'] = ''
-        
-    if conf.is_extrafanart():
-        if extrafanart:
-            json_data['extrafanart'] = extrafanart
-        else:
-            json_data['extrafanart'] = ''
-    else:
-        json_data['extrafanart'] = ''
-        
-    naming_rule=""
-    for i in conf.naming_rule().split("+"):
-        if i not in json_data:
-            naming_rule += i.strip("'").strip('"')
-        else:
-            naming_rule += json_data.get(i)
-    json_data['naming_rule'] = naming_rule
+    logging.debug(str(movie))
     return json_data
 
 
@@ -299,7 +210,7 @@ def get_info(json_data):  # 返回json里的数据
     return title, studio, year, outline, runtime, director, actor_photo, release, number, cover, trailer, website, series, label
 
 
-def small_cover_check(path, number, cover_small, c_word, conf: config.Config, filepath, failed_folder):
+def small_cover_check(path, number, cover_small, c_word, conf: Config, filepath, failed_folder):
     download_file_with_filename(cover_small, number + c_word + '-poster.jpg', path, conf, filepath, failed_folder)
     print('[+]Image Downloaded! ' + path + '/' + number + c_word + '-poster.jpg')
 
@@ -308,8 +219,8 @@ def small_cover_check(path, number, cover_small, c_word, conf: config.Config, fi
 # =====================资源下载部分===========================
 
 # path = examle:photo , video.in the Project Folder!
-def download_file_with_filename(url, filename, path, conf: config.Config, filepath, failed_folder):
-    switch, proxy, timeout, retry_count, proxytype = config.Config().proxy()
+def download_file_with_filename(url, filename, path, conf: Config, filepath, failed_folder):
+    switch, proxy, timeout, retry_count, proxytype = conf.proxy()
 
     for i in range(retry_count):
         try:
@@ -354,7 +265,7 @@ def download_file_with_filename(url, filename, path, conf: config.Config, filepa
     moveFailedFolder(filepath, failed_folder)
     return
 
-def trailer_download(trailer, c_word, number, path, filepath, conf: config.Config, failed_folder):
+def trailer_download(trailer, c_word, number, path, filepath, conf: Config, failed_folder):
     if download_file_with_filename(trailer, number + c_word + '-trailer.mp4', path, conf, filepath, failed_folder) == 'failed':
         return
     switch, _proxy, _timeout, retry, _proxytype = conf.proxy()
@@ -370,7 +281,7 @@ def trailer_download(trailer, c_word, number, path, filepath, conf: config.Confi
     print('[+]Video Downloaded!', path + '/' + number + c_word + '-trailer.mp4')
 
 # 剧照下载成功，否则移动到failed
-def extrafanart_download(data, path, conf: config.Config, filepath, failed_folder):
+def extrafanart_download(data, path, conf: Config, filepath, failed_folder):
     j = 1
     path = path + '/' + conf.get_extrafanart()
     for url in data:
@@ -394,7 +305,7 @@ def extrafanart_download(data, path, conf: config.Config, filepath, failed_folde
 
 
 # 封面是否下载成功，否则移动到failed
-def image_download(cover, number, c_word, path, conf: config.Config, filepath, failed_folder):
+def image_download(cover, number, c_word, path, conf: Config, filepath, failed_folder):
     if download_file_with_filename(cover, number + c_word + '-fanart.jpg', path, conf, filepath, failed_folder) == 'failed':
         moveFailedFolder(filepath, failed_folder)
         return
@@ -490,7 +401,7 @@ def print_files(path, c_word, naming_rule, part, cn_sub, json_data, filepath, fa
             print("  <num>" + number + "</num>", file=code)
             print("  <premiered>" + release + "</premiered>", file=code)
             print("  <cover>" + cover + "</cover>", file=code)
-            if config.Config().is_trailer():
+            if Config.get_instance().is_trailer():
                 print("  <trailer>" + trailer + "</trailer>", file=code)
             print("  <website>" + website + "</website>", file=code)
             print(f"""  <original_filename>{os.path.basename(filepath)}</original_filename>""", file=code)
@@ -533,7 +444,7 @@ def cutImage(imagecut, path, number, c_word):
 # leak     流出     参数值为 1   0
 # uncensored 无码   参数值为 1   0
 # ========================================================================加水印
-def add_mark(poster_path, thumb_path, cn_sub, leak, uncensored, conf:config.Config):
+def add_mark(poster_path, thumb_path, cn_sub, leak, uncensored, conf:Config):
     mark_type = ''
     if cn_sub:
         mark_type += ',字幕'
@@ -588,7 +499,7 @@ def add_to_pic(pic_path, img_pic, size, count, mode):
     img_pic.save(pic_path, quality=95)
 # ========================结束=================================
 
-def paste_file_to_folder(filepath, path, number, c_word, conf: config.Config):  # 文件路径，番号，后缀，要移动至的位置
+def paste_file_to_folder(filepath, path, number, c_word, conf: Config):  # 文件路径，番号，后缀，要移动至的位置
     houzhui = os.path.splitext(filepath)[1].replace(",","")
     file_parent_origin_path = str(pathlib.Path(filepath).parent)
     try:
@@ -668,7 +579,7 @@ def debug_print(data: json):
         pass
 
 
-def core_main(file_path, number_th, conf: config.Config):
+def core_main(file_path, number_th, conf: Config):
     # =======================================================================初始化所需变量
     multi_part = 0
     part = ''
@@ -717,10 +628,6 @@ def core_main(file_path, number_th, conf: config.Config):
     else:
         leak = 0
 
-    # 调试模式检测
-    if conf.debug():
-        debug_print(json_data)
-
     # main_mode
     #  1: 刮削模式 / Scraping mode
     #  2: 整理模式 / Organizing mode
@@ -745,7 +652,7 @@ def core_main(file_path, number_th, conf: config.Config):
             pass
         
         try:
-            # 下载剧照 data, path, conf: config.Config, filepath, failed_folder
+            # 下载剧照 data, path, conf: Config, filepath, failed_folder
             if json_data.get('extrafanart'):
                 extrafanart_download(json_data.get('extrafanart'), path, conf, filepath, conf.failed_folder())
         except:
@@ -790,7 +697,7 @@ def core_main(file_path, number_th, conf: config.Config):
         if json_data.get('trailer'):
             trailer_download(json_data.get('trailer'), c_word, number, path, filepath, conf, conf.failed_folder())
 
-        # 下载剧照 data, path, conf: config.Config, filepath, failed_folder
+        # 下载剧照 data, path, conf: Config, filepath, failed_folder
         if json_data.get('extrafanart'):
             extrafanart_download(json_data.get('extrafanart'), path, conf, filepath, conf.failed_folder())
 

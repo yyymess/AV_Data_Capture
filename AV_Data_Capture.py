@@ -7,12 +7,11 @@ import shutil
 import logging
 from pathlib import Path
 
-import config
+from avdc.config import Config
 from ADC_function import get_html
-from lib.file_mgmt import create_success_failed_folder,rm_empty_success_failed_folder
+from util.file_mgmt import dir_picker, create_success_failed_folder, rm_empty_success_failed_folder
 from number_parser import get_number
 from core import core_main
-from lib import dir_picker
 
 
 def check_update(local_version):
@@ -62,8 +61,6 @@ def movie_lists(root, escape_folder):
     return total
 
 
-
-
 def rm_empty_folder(path):
     try:
         files = os.listdir(path)  # 获取路径下的子文件(夹)列表
@@ -74,7 +71,7 @@ def rm_empty_folder(path):
         pass
 
 
-def create_data_and_move(file_path: str, c: config.Config, debug):
+def create_data_and_move(file_path: str, c: Config, debug):
     # Normalized number, eg: 111xxx-222.mp4 -> xxx-222.mp4
     n_number = get_number(debug, os.path.basename(file_path))
     file_path = os.path.abspath(file_path)
@@ -109,7 +106,7 @@ def create_data_and_move(file_path: str, c: config.Config, debug):
                         print('[!]', err)
 
 
-def create_data_and_move_with_custom_number(file_path: str, c: config.Config, custom_number=None):
+def create_data_and_move_with_custom_number(file_path: str, c: Config, custom_number=None):
     try:
         print("[!]Making Data for [{}], the number is [{}]".format(file_path, custom_number))
         core_main(file_path, custom_number, c)
@@ -140,25 +137,19 @@ if __name__ == '__main__':
     print('[*]======================================================')
 
     # Read config.ini
-    conf = config.Config(path=config_file)
+    conf = Config.get_instance(path=config_file)
 
     if conf.update_check():
         check_update(version)
 
-    if conf.debug():
-        print('[+]Enable debug')
-        logging.basicConfig(level=logging.DEBUG)
-    else:
-        logging.basicConfig(level=logging.INFO)
     if conf.soft_link():
         print('[!]Enable soft link')
-
 
     if single_file_path:
         conf.folder_path = os.path.basename(single_file_path)
     else:
         if not folder_path:
-            folder_path = dir_picker.dir_picker()
+            folder_path = dir_picker()
         conf.folder_path = folder_path
     if not conf.folder_path:
         logging.error('无法定位根文件夹。')

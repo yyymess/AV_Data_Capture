@@ -1,30 +1,68 @@
+from __future__ import annotations  # Type hint for singleton
+
 import os
 import configparser
-import codecs
+import logging
+import coloredlogs
+import inspect
+import traceback
+from pathlib import Path
+
+logger = logging.getLogger(__name__)
+
+
+from typing import Union
 
 
 class Config:
-    def __init__(self, path: str = "config.ini"):
-        if os.path.exists(path):
-            self.conf = configparser.ConfigParser()
-            try:
-                self.conf.read(path, encoding="utf-8-sig")
-            except:
-                self.conf.read(path, encoding="utf-8")
-        else:
-            try:
-                self.conf = configparser.ConfigParser()
-                try: # From single crawler debug use only
-                    self.conf.read('../' + path, encoding="utf-8-sig")
+    _instance: Union[Config, None] = None
+
+    def __init__(self, path: str = "config.ini") -> None:
+        if Config._instance is None:
+            Config._instance = self
+
+        fname = os.path.basename(path)
+        config_paths = [
+            os.path.abspath('./' + path),
+            os.path.join(os.getcwd(), fname),
+            os.path.join(Path(__file__).parent, fname),
+        ]
+
+        for p in config_paths:
+            if os.path.exists(p):
+                logger.debug(f'试图载入 {p}')
+                parser = configparser.ConfigParser()
+                try:
+                    parser.read(p, encoding="utf-8-sig")
+                    self.conf = parser
+                    break
                 except:
-                    self.conf.read('../' + path, encoding="utf-8")
-            except Exception as e:
-                print("[-]Config file not found! Use the default settings")
-                print("[-]",e)
-                self.conf = self._default_config()
+                    logger.error('配置文件{p}载入失败。')
+
+        if not self.conf:
+            logger.error('载入配置文件失败，使用默认配置。')
+            self.conf = self._default_config()
 
         # TODO adding this here for now.
         self.folder_path = os.path.abspath(".")
+
+    @staticmethod
+    def get_instance(path: str = 'config.ini') -> Config:
+        if Config._instance is None:
+
+            coloredlogs.install(level='DEBUG')
+            Config(path)
+
+            if Config._instance.debug():
+                print('[+]Enable debug')
+                coloredlogs.install(level='DEBUG')
+                frame = inspect.currentframe()
+                stack_trace = traceback.format_stack(frame)
+                logger.debug(stack_trace[:-1])
+            else:
+                coloredlogs.install(level='INFO')
+            logger.debug(f'读取config文件 {path}')
+        return Config._instance
 
     def main_mode(self) -> str:
         try:
@@ -48,6 +86,13 @@ class Config:
         return self.conf.getboolean("common", "transalte_to_sc")
     def is_transalte(self) -> bool:
         return self.conf.getboolean("transalte", "switch")
+
+    def translate_to_sc(self) -> bool:
+        return self.conf.getboolean("common", "transalte_to_sc")
+    def is_translate(self) -> bool:
+        return self.conf.getboolean("transalte", "switch")
+
+
     def is_trailer(self) -> bool:
         return self.conf.getboolean("trailer", "switch")
 
@@ -117,10 +162,8 @@ class Config:
         """
         Maximum title length
         """
-        try:
-            return self.conf.getint("Name_Rule", "max_title_len")
-        except:
-            return 50
+        return self.conf.getint("Name_Rule", "max_title_len", fallback=50)
+
 
     def update_check(self) -> bool:
         try:
@@ -138,7 +181,7 @@ class Config:
         return self.conf.get("escape", "folders")
 
     def debug(self) -> bool:
-        return self.conf.getboolean("debug_mode", "switch")
+        return self.conf.getboolean("debug_mode", "switch", fallback=False)
 
     @staticmethod
     def _exit(sec: str) -> None:
@@ -228,7 +271,7 @@ class Config:
 
 
 if __name__ == "__main__":
-    config = Config()
+    config = Config.get_instance()
     print(config.main_mode())
     print(config.failed_folder())
     print(config.success_folder())
