@@ -10,9 +10,10 @@ from PIL import Image
 from io import BytesIO
 
 from ADC_function import *
-from config import Config
-from lib.file_mgmt import create_folder
-from lib.tag_processor import process_tags
+from avdc.config import Config
+from model.movie import Movie
+from util.file_mgmt import create_folder
+from util.tag_processor import process_tags
 
 # =========website========
 from WebCrawler import airav
@@ -116,8 +117,9 @@ def get_data_from_json(file_number, filepath, conf: Config):  # 从JSON返回元
         moveFailedFolder(filepath, conf.failed_folder())
         return
 
-    # ================================================网站规则添加结束================================================
 
+    movie = Movie()
+    # ================================================网站规则添加结束================================================
     title = json_data.get('title')
     actor_list = str(json_data.get('actor')).strip("[ ]").replace("'", '').split(',')  # 字符串转列表
     actor_list = [actor.strip() for actor in actor_list]  # 去除空白
@@ -212,16 +214,27 @@ def get_data_from_json(file_number, filepath, conf: Config):  # 从JSON返回元
     studio = re.sub('.*/妄想族','妄想族',studio)
     studio = studio.replace('/',' ')
     # ===  替换Studio片假名 END
-    
-    location_rule = eval(conf.location_rule())
 
-    if 'actor' in conf.location_rule() and len(actor) > 100:
-        print(conf.location_rule())
-        location_rule = eval(conf.location_rule().replace("actor","'多人作品'"))
-    maxlen = conf.max_title_len()
-    if 'title' in conf.location_rule() and len(title) > maxlen:
-        shorttitle = title[0:maxlen]
-        location_rule = location_rule.replace(title, shorttitle)
+    movie.title = title
+    movie.actors = json_data.get('actor')
+    movie.release = json_data.get('release')
+    movie.cover_small = json_data.get('cover_small')
+    movie.cover = json_data.get('cover')
+    movie.tags = json_data.get('tag')
+    movie.year = json_data.get('year')
+    movie.series = series
+    movie.scraper_source = source
+    movie.runtime = runtime
+    movie.outline = outline
+    movie.scraper_source = source
+    movie.label = label
+    movie.studio = studio
+    movie.director = json_data.get('director')
+    movie.movie_id = json_data.get('number')
+    movie.trailer = json_data.get('trailer')
+    movie.website = json_data.get('website')
+    movie.imagecut = json_data.get('imagecut')
+    movie.extra_fanart = json_data.get('extrafanart')
 
     # 返回处理后的json_data
     json_data['first_actor'] = first_actor
@@ -230,7 +243,8 @@ def get_data_from_json(file_number, filepath, conf: Config):  # 从JSON返回元
     json_data['release'] = release
     json_data['cover_small'] = cover_small
     json_data['tag'] = tag
-    json_data['location_rule'] = location_rule
+    json_data['location_rule'] = movie.storage_dir
+    json_data['naming_rule'] = movie.storage_fname
     json_data['year'] = year
     json_data['actor_list'] = actor_list
     if conf.is_transalte():
@@ -272,14 +286,8 @@ def get_data_from_json(file_number, filepath, conf: Config):  # 从JSON返回元
             json_data['extrafanart'] = ''
     else:
         json_data['extrafanart'] = ''
-        
-    naming_rule=""
-    for i in conf.naming_rule().split("+"):
-        if i not in json_data:
-            naming_rule += i.strip("'").strip('"')
-        else:
-            naming_rule += json_data.get(i)
-    json_data['naming_rule'] = naming_rule
+
+    logging.debug(str(movie))
     return json_data
 
 

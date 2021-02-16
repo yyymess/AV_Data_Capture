@@ -6,7 +6,7 @@ import json
 import time
 from lxml import etree
 import re
-from config import Config
+from avdc.config import Config
 import logging
 
 SUPPORT_PROXY_TYPE = ("http", "socks5", "socks5h")

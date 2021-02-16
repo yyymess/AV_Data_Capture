@@ -7,12 +7,11 @@ import shutil
 import logging
 from pathlib import Path
 
-from config import Config
+from avdc.config import Config
 from ADC_function import get_html
-from lib.file_mgmt import create_success_failed_folder, rm_empty_success_failed_folder
+from util.file_mgmt import dir_picker, create_success_failed_folder, rm_empty_success_failed_folder
 from number_parser import get_number
 from core import core_main
-from lib import dir_picker
 
 
 def check_update(local_version):
@@ -60,8 +59,6 @@ def movie_lists(root, escape_folder):
         elif os.path.splitext(f)[1].upper() in file_type:
             total.append(os.path.abspath(f))
     return total
-
-
 
 
 def rm_empty_folder(path):
@@ -152,7 +149,7 @@ if __name__ == '__main__':
         conf.folder_path = os.path.basename(single_file_path)
     else:
         if not folder_path:
-            folder_path = dir_picker.dir_picker()
+            folder_path = dir_picker()
         conf.folder_path = folder_path
     if not conf.folder_path:
         logging.error('无法定位根文件夹。')
