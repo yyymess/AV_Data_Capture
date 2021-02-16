@@ -49,6 +49,8 @@ class Config:
     @staticmethod
     def get_instance(path: str = 'config.ini') -> Config:
         if Config._instance is None:
+
+            coloredlogs.install(level='DEBUG')
             Config(path)
 
             if Config._instance.debug():

@@ -2,6 +2,8 @@
 
 from avdc.config import Config
 from avdc.util.tag_processor import process_tags
+from avdc.util.studio_processor import process_studio
+from avdc.util.title_processor import process_title
 
 class Movie:
     '''
@@ -62,8 +64,9 @@ release:          {self.release}
 cover:            {self.cover}
 cover_small:      {self.cover_small}
 tags:             {self.tags}
-processed_tags:   {self.processed_tags}
+raw_tags:         {self.raw_tags}
 studio:           {self.studio}
+raw_studio:       {self.raw_studio}
 movie_id:         {self.movie_id}
 outline:          {self.outline}
 runtime:          {self.runtime}
@@ -79,7 +82,7 @@ storage_fname:    {self.storage_fname}
 
     @property
     def title(self) -> str:
-        return self._title
+        return process_title(self._title)
 
     @title.setter
     def title(self, value: str) -> None:
@@ -98,6 +101,8 @@ storage_fname:    {self.storage_fname}
     @actors.setter
     def actors(self, value: [str]) -> None:
         if value:
+            value = [i.strip() for i in value]
+            value = [i for i in value if i]
             self._actor = value
 
     @property
@@ -109,7 +114,7 @@ storage_fname:    {self.storage_fname}
 
     @property
     def release(self) -> str:
-        return self._release
+        return self._release.replace('/', '-')
 
     @release.setter
     def release(self, value: str) -> None:
@@ -123,11 +128,15 @@ storage_fname:    {self.storage_fname}
     @cover_small.setter
     def cover_small(self, value: str) -> None:
         if value:
-            self._cover_small = value
+            tmpArr = cover_small.split(',')
+            if len(tmpArr) > 0:
+                self._cover_small = tmpArr[0].strip('\"').strip('\'')
+            else:
+                self._cover_small = value
 
     @property
     def tags(self) -> [str]:
-        return self._tags
+        return process_tags(self._tags)
 
     @tags.setter
     def tags(self, value: [str]) -> None:
@@ -135,17 +144,21 @@ storage_fname:    {self.storage_fname}
             self._tags = value
 
     @property
-    def processed_tags(self) -> [str]:
-        return process_tags(self.tags)
+    def raw_tags(self) -> [str]:
+        return self._tags
 
     @property
     def studio(self) -> str:
-        return self._studio
+        return process_studio(self._studio)
 
     @studio.setter
     def studio(self, value: str) -> None:
         if value:
             self._studio = value
+
+    @property
+    def raw_studio(self) -> str:
+        return self._studio
 
     @property
     def director(self) -> str:
@@ -230,7 +243,10 @@ storage_fname:    {self.storage_fname}
 
     @property
     def website(self) -> str:
-        return self._website
+        if self._conf.is_trailer():
+            return self._website
+        else:
+            return ''
 
     @website.setter
     def website(self, value: str) -> None:
@@ -248,7 +264,10 @@ storage_fname:    {self.storage_fname}
 
     @property
     def extra_fanart(self) -> str:
-        return self._extra_fanart
+        if self._conf.is_extrafanart():
+            return self._extra_fanart
+        else:
+            return ''
 
     @extra_fanart.setter
     def extra_fanart(self, value: str) -> None:

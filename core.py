@@ -117,118 +117,22 @@ def get_data_from_json(file_number, filepath, conf: Config):  # 从JSON返回元
         moveFailedFolder(filepath, conf.failed_folder())
         return
 
+    # ================================================网站规则添加结束================================================
 
     movie = Movie()
-    # ================================================网站规则添加结束================================================
-    title = json_data.get('title')
-    actor_list = str(json_data.get('actor')).strip("[ ]").replace("'", '').split(',')  # 字符串转列表
-    actor_list = [actor.strip() for actor in actor_list]  # 去除空白
-    first_actor = actor_list[0]
-    release = json_data.get('release')
-    number = json_data.get('number')
-    studio = json_data.get('studio')
-    source = json_data.get('source')
-    runtime = json_data.get('runtime')
-    outline = json_data.get('outline')
-    label = json_data.get('label')
-    series = json_data.get('series')
-    year = json_data.get('year')
-
-    if json_data.get('cover_small') == None:
-        cover_small = ''
-    else:
-        cover_small = json_data.get('cover_small')
-    
-    if json_data.get('trailer') == None:
-        trailer = ''
-    else:
-        trailer = json_data.get('trailer')
-        
-    if json_data.get('extrafanart') == None:
-        extrafanart = ''
-    else:
-        extrafanart = json_data.get('extrafanart')
-    
-    imagecut = json_data.get('imagecut')
-    tag = process_tags(json_data.get('tag'))
-    actor = str(actor_list).strip("[ ]").replace("'", '').replace(" ", '')
-
-    if title == '' or number == '':
-        print('[-]Movie Data not found!')
-        moveFailedFolder(filepath, conf.failed_folder())
-        return
-
-    # if imagecut == '3':
-    #     DownloadFileWithFilename()
-
-    # ====================处理异常字符====================== #\/:*?"<>|
-    title = title.replace('\\', '')
-    title = title.replace('/', '')
-    title = title.replace(':', '')
-    title = title.replace('*', '')
-    title = title.replace('?', '')
-    title = title.replace('"', '')
-    title = title.replace('<', '')
-    title = title.replace('>', '')
-    title = title.replace('|', '')
-    release = release.replace('/', '-')
-    tmpArr = cover_small.split(',')
-    if len(tmpArr) > 0:
-        cover_small = tmpArr[0].strip('\"').strip('\'')
-
-    # ====================处理异常字符 END================== #\/:*?"<>|
-
-    # ===  替换Studio片假名
-    studio = studio.replace('アイエナジー','Energy')
-    studio = studio.replace('アイデアポケット','Idea Pocket')
-    studio = studio.replace('アキノリ','AKNR')
-    studio = studio.replace('アタッカーズ','Attackers')
-    studio = re.sub('アパッチ.*','Apache',studio)
-    studio = studio.replace('アマチュアインディーズ','SOD')
-    studio = studio.replace('アリスJAPAN','Alice Japan')
-    studio = studio.replace('オーロラプロジェクト・アネックス','Aurora Project Annex')
-    studio = studio.replace('クリスタル映像','Crystal 映像')
-    studio = studio.replace('グローリークエスト','Glory Quest')
-    studio = studio.replace('ダスッ！','DAS！')
-    studio = studio.replace('ディープス','DEEP’s')
-    studio = studio.replace('ドグマ','Dogma')
-    studio = studio.replace('プレステージ','PRESTIGE')
-    studio = studio.replace('ムーディーズ','MOODYZ')
-    studio = studio.replace('メディアステーション','宇宙企画')
-    studio = studio.replace('ワンズファクトリー','WANZ FACTORY')
-    studio = studio.replace('エスワン ナンバーワンスタイル','S1')
-    studio = studio.replace('エスワンナンバーワンスタイル','S1')
-    studio = studio.replace('SODクリエイト','SOD')
-    studio = studio.replace('サディスティックヴィレッジ','SOD')
-    studio = studio.replace('V＆Rプロダクツ','V＆R PRODUCE')
-    studio = studio.replace('V＆RPRODUCE','V＆R PRODUCE')
-    studio = studio.replace('レアルワークス','Real Works')
-    studio = studio.replace('マックスエー','MAX-A')
-    studio = studio.replace('ピーターズMAX','PETERS MAX')
-    studio = studio.replace('プレミアム','PREMIUM')
-    studio = studio.replace('ナチュラルハイ','NATURAL HIGH')
-    studio = studio.replace('マキシング','MAXING')
-    studio = studio.replace('エムズビデオグループ','M’s Video Group')
-    studio = studio.replace('ミニマム','Minimum')
-    studio = studio.replace('ワープエンタテインメント','WAAP Entertainment')
-    studio = re.sub('.*/妄想族','妄想族',studio)
-    studio = studio.replace('/',' ')
-    # ===  替换Studio片假名 END
-
-    movie.title = title
+    movie.title = json_data.get('title')
     movie.actors = json_data.get('actor')
     movie.release = json_data.get('release')
     movie.cover_small = json_data.get('cover_small')
     movie.cover = json_data.get('cover')
     movie.tags = json_data.get('tag')
     movie.year = json_data.get('year')
-    movie.series = series
-    movie.scraper_source = source
-    movie.runtime = runtime
-    movie.outline = outline
-    movie.scraper_source = source
-    movie.label = label
-    movie.studio = studio
+    movie.series = json_data.get('series')
+    movie.runtime = json_data.get('runtime')
+    movie.outline = json_data.get('outline')
+    movie.scraper_source = json_data.get('source')
+    movie.label = json_data.get('label')
+    movie.studio = json_data.get('studio')
     movie.director = json_data.get('director')
     movie.movie_id = json_data.get('number')
     movie.trailer = json_data.get('trailer')
@@ -236,17 +140,29 @@ def get_data_from_json(file_number, filepath, conf: Config):  # 从JSON返回元
     movie.imagecut = json_data.get('imagecut')
     movie.extra_fanart = json_data.get('extrafanart')
 
+    if movie.title == '' or movie.movie_id == '':
+        print('[-]Movie Data not found!')
+        moveFailedFolder(filepath, conf.failed_folder())
+        return
+
     # 返回处理后的json_data
-    json_data['first_actor'] = first_actor
-    json_data['title'] = title
-    json_data['actor'] = actor
-    json_data['release'] = release
-    json_data['cover_small'] = cover_small
-    json_data['tag'] = tag
+    json_data['first_actor'] = movie.first_actor
+    json_data['title'] = movie.title
+    json_data['actor'] = ','.join(movie.actors)
+    json_data['release'] = movie.release
+    json_data['cover_small'] = movie.cover_small
+    json_data['tag'] = movie.tags
     json_data['location_rule'] = movie.storage_dir
     json_data['naming_rule'] = movie.storage_fname
-    json_data['year'] = year
-    json_data['actor_list'] = actor_list
+    json_data['year'] = movie.year
+    json_data['studio'] = movie.studio
+    json_data['actor_list'] = movie.actors
+    json_data['extrafanart'] = movie.extra_fanart
+    json_data['trailer'] = movie.trailer
+    json_data['movie_obj'] = movie
+
+    """
+    TODO:  翻译以后再说
     if conf.is_transalte():
         translate_values = conf.transalte_values().split(",")
         for translate_value in translate_values:
@@ -270,22 +186,7 @@ def get_data_from_json(file_number, filepath, conf: Config):  # 从JSON返回元
                 )
             else:
                 json_data[translate_value] = translate(json_data[translate_value])
-
-    if conf.is_trailer():
-        if trailer:
-            json_data['trailer'] = trailer
-        else:
-            json_data['trailer'] = ''
-    else:
-        json_data['trailer'] = ''
-        
-    if conf.is_extrafanart():
-        if extrafanart:
-            json_data['extrafanart'] = extrafanart
-        else:
-            json_data['extrafanart'] = ''
-    else:
-        json_data['extrafanart'] = ''
+    """
 
     logging.debug(str(movie))
     return json_data
@@ -726,10 +627,6 @@ def core_main(file_path, number_th, conf: Config):
         leak = 1
     else:
         leak = 0
-
-    # 调试模式检测
-    if conf.debug():
-        debug_print(json_data)
 
     # main_mode
     #  1: 刮削模式 / Scraping mode

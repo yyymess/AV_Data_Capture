@@ -4,8 +4,8 @@ import os
 import logging
 
 from typing import Optional
-from .file_mgmt import get_project_root
 from avdc.config import Config
+from avdc.util.file_mgmt import get_project_root
 
 CSV_FNAME = "data/tag_sc_map.csv"
 
