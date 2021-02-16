@@ -10,6 +10,7 @@ from PIL import Image
 from io import BytesIO
 
 from ADC_function import *
+from config import Config
 from lib.file_mgmt import create_folder
 from lib.tag_processor import process_tags
 
@@ -35,11 +36,12 @@ def escape_path(path, escape_literals: str):  # Remove escape literals
 
 
 def moveFailedFolder(filepath, failed_folder):
-    if config.Config().failed_move():
+    config = Config.get_instance()
+    if config.failed_move():
         root_path = str(pathlib.Path(filepath).parent)
         file_name = pathlib.Path(filepath).name
         destination_path = root_path + '/' + failed_folder + '/'
-        if config.Config().soft_link():
+        if config.soft_link():
             print('[-]Create symlink to Failed output folder')
             os.symlink(filepath, destination_path + '/' + file_name)
         else:
@@ -48,7 +50,7 @@ def moveFailedFolder(filepath, failed_folder):
     return
 
 
-def get_data_from_json(file_number, filepath, conf: config.Config):  # 从JSON返回元数据
+def get_data_from_json(file_number, filepath, conf: Config):  # 从JSON返回元数据
     """
     iterate through all services and fetch the data 
     """
@@ -146,7 +148,7 @@ def get_data_from_json(file_number, filepath, conf: config.Config):  # 从JSON�
         extrafanart = json_data.get('extrafanart')
     
     imagecut = json_data.get('imagecut')
-    tag = process_tags(json_data.get('tag'), conf.transalte_to_sc())
+    tag = process_tags(json_data.get('tag'))
     actor = str(actor_list).strip("[ ]").replace("'", '').replace(" ", '')
 
     if title == '' or number == '':
@@ -299,7 +301,7 @@ def get_info(json_data):  # 返回json里的数据
     return title, studio, year, outline, runtime, director, actor_photo, release, number, cover, trailer, website, series, label
 
 
-def small_cover_check(path, number, cover_small, c_word, conf: config.Config, filepath, failed_folder):
+def small_cover_check(path, number, cover_small, c_word, conf: Config, filepath, failed_folder):
     download_file_with_filename(cover_small, number + c_word + '-poster.jpg', path, conf, filepath, failed_folder)
     print('[+]Image Downloaded! ' + path + '/' + number + c_word + '-poster.jpg')
 
@@ -308,8 +310,8 @@ def small_cover_check(path, number, cover_small, c_word, conf: config.Config, fi
 # =====================资源下载部分===========================
 
 # path = examle:photo , video.in the Project Folder!
-def download_file_with_filename(url, filename, path, conf: config.Config, filepath, failed_folder):
-    switch, proxy, timeout, retry_count, proxytype = config.Config().proxy()
+def download_file_with_filename(url, filename, path, conf: Config, filepath, failed_folder):
+    switch, proxy, timeout, retry_count, proxytype = conf.proxy()
 
     for i in range(retry_count):
         try:
@@ -354,7 +356,7 @@ def download_file_with_filename(url, filename, path, conf: config.Config, filepa
     moveFailedFolder(filepath, failed_folder)
     return
 
-def trailer_download(trailer, c_word, number, path, filepath, conf: config.Config, failed_folder):
+def trailer_download(trailer, c_word, number, path, filepath, conf: Config, failed_folder):
     if download_file_with_filename(trailer, number + c_word + '-trailer.mp4', path, conf, filepath, failed_folder) == 'failed':
         return
     switch, _proxy, _timeout, retry, _proxytype = conf.proxy()
@@ -370,7 +372,7 @@ def trailer_download(trailer, c_word, number, path, filepath, conf: config.Confi
     print('[+]Video Downloaded!', path + '/' + number + c_word + '-trailer.mp4')
 
 # 剧照下载成功，否则移动到failed
-def extrafanart_download(data, path, conf: config.Config, filepath, failed_folder):
+def extrafanart_download(data, path, conf: Config, filepath, failed_folder):
     j = 1
     path = path + '/' + conf.get_extrafanart()
     for url in data:
@@ -394,7 +396,7 @@ def extrafanart_download(data, path, conf: config.Config, filepath, failed_folde
 
 
 # 封面是否下载成功，否则移动到failed
-def image_download(cover, number, c_word, path, conf: config.Config, filepath, failed_folder):
+def image_download(cover, number, c_word, path, conf: Config, filepath, failed_folder):
     if download_file_with_filename(cover, number + c_word + '-fanart.jpg', path, conf, filepath, failed_folder) == 'failed':
         moveFailedFolder(filepath, failed_folder)
         return
@@ -490,7 +492,7 @@ def print_files(path, c_word, naming_rule, part, cn_sub, json_data, filepath, fa
             print("  <num>" + number + "</num>", file=code)
             print("  <premiered>" + release + "</premiered>", file=code)
             print("  <cover>" + cover + "</cover>", file=code)
-            if config.Config().is_trailer():
+            if Config.get_instance().is_trailer():
                 print("  <trailer>" + trailer + "</trailer>", file=code)
             print("  <website>" + website + "</website>", file=code)
             print(f"""  <original_filename>{os.path.basename(filepath)}</original_filename>""", file=code)
@@ -533,7 +535,7 @@ def cutImage(imagecut, path, number, c_word):
 # leak     流出     参数值为 1   0
 # uncensored 无码   参数值为 1   0
 # ========================================================================加水印
-def add_mark(poster_path, thumb_path, cn_sub, leak, uncensored, conf:config.Config):
+def add_mark(poster_path, thumb_path, cn_sub, leak, uncensored, conf:Config):
     mark_type = ''
     if cn_sub:
         mark_type += ',字幕'
@@ -588,7 +590,7 @@ def add_to_pic(pic_path, img_pic, size, count, mode):
     img_pic.save(pic_path, quality=95)
 # ========================结束=================================
 
-def paste_file_to_folder(filepath, path, number, c_word, conf: config.Config):  # 文件路径，番号，后缀，要移动至的位置
+def paste_file_to_folder(filepath, path, number, c_word, conf: Config):  # 文件路径，番号，后缀，要移动至的位置
     houzhui = os.path.splitext(filepath)[1].replace(",","")
     file_parent_origin_path = str(pathlib.Path(filepath).parent)
     try:
@@ -668,7 +670,7 @@ def debug_print(data: json):
         pass
 
 
-def core_main(file_path, number_th, conf: config.Config):
+def core_main(file_path, number_th, conf: Config):
     # =======================================================================初始化所需变量
     multi_part = 0
     part = ''
@@ -745,7 +747,7 @@ def core_main(file_path, number_th, conf: config.Config):
             pass
         
         try:
-            # 下载剧照 data, path, conf: config.Config, filepath, failed_folder
+            # 下载剧照 data, path, conf: Config, filepath, failed_folder
             if json_data.get('extrafanart'):
                 extrafanart_download(json_data.get('extrafanart'), path, conf, filepath, conf.failed_folder())
         except:
@@ -790,7 +792,7 @@ def core_main(file_path, number_th, conf: config.Config):
         if json_data.get('trailer'):
             trailer_download(json_data.get('trailer'), c_word, number, path, filepath, conf, conf.failed_folder())
 
-        # 下载剧照 data, path, conf: config.Config, filepath, failed_folder
+        # 下载剧照 data, path, conf: Config, filepath, failed_folder
         if json_data.get('extrafanart'):
             extrafanart_download(json_data.get('extrafanart'), path, conf, filepath, conf.failed_folder())
 

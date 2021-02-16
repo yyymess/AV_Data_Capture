@@ -6,7 +6,7 @@ import json
 import time
 from lxml import etree
 import re
-import config
+from config import Config
 import logging
 
 SUPPORT_PROXY_TYPE = ("http", "socks5", "socks5h")
@@ -46,8 +46,8 @@ def get_proxy(proxy: str, proxytype: str = None) -> dict:
 
 # 网页请求核心
 def get_html(url, cookies: dict = None, ua: str = None, return_type: str = None):
-    verify=config.Config().cacert_file()
-    switch, proxy, timeout, retry_count, proxytype = config.Config().proxy()
+    verify=Config.get_instance().cacert_file()
+    switch, proxy, timeout, retry_count, proxytype = Config.get_instance().proxy()
     proxies = get_proxy(proxy, proxytype)
 
     if ua is None:
@@ -80,7 +80,7 @@ def get_html(url, cookies: dict = None, ua: str = None, return_type: str = None)
 
 
 def post_html(url: str, query: dict, headers: dict = None) -> requests.Response:
-    switch, proxy, timeout, retry_count, proxytype = config.Config().proxy()
+    switch, proxy, timeout, retry_count, proxytype = Config.get_instance().proxy()
     proxies = get_proxy(proxy, proxytype)
     headers_ua = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3100.0 Safari/537.36"}
@@ -103,7 +103,7 @@ def post_html(url: str, query: dict, headers: dict = None) -> requests.Response:
 
 def get_javlib_cookie() -> [dict, str]:
     import cloudscraper
-    switch, proxy, timeout, retry_count, proxytype = config.Config().proxy()
+    switch, proxy, timeout, retry_count, proxytype = Config.get_instance().proxy()
     proxies = get_proxy(proxy, proxytype)
 
     raw_cookie = {}
@@ -195,7 +195,7 @@ def translate(
 def is_uncensored(number):
     if re.match('^\d{4,}', number) or re.match('n\d{4}', number) or 'HEYZO' in number.upper():
         return True
-    configs = config.Config().get_uncensored()
+    configs = Config.get_instance().get_uncensored()
     prefix_list = str(configs).split(',')
     for pre in prefix_list:
         if pre.upper() in number.upper():
