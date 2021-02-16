@@ -6,17 +6,14 @@ import sys
 
 from tkinter import Tk, filedialog
 import os
-from pathlib import Path
 from avdc import config
+from avdc.model.movie import Movie
 
 def dir_picker() -> str:
     '''询问用户并返回一个文件夹'''
     root = Tk()
     root.withdraw()
     return filedialog.askdirectory()
-
-def get_project_root() -> Path:
-    return Path(__file__).parent.parent
 
 def get_info(json_data):  # TODO: 优化
     title = json_data.get('title')
@@ -36,15 +33,11 @@ def get_info(json_data):  # TODO: 优化
     return title, studio, year, outline, runtime, director, actor_photo, release, number, cover, trailer, website, series, label
 
 def create_folder(
-        success_folder: str,
-        location_rule: str,
-        json_data: str,
+        movie: Movie,
         conf: config.Config) -> str:
     """为每部影片建立对应的文件夹。"""
 
-    title, studio, year, outline, runtime, director, actor_photo, release, number, cover, trailer, website, series, label = get_info(json_data)
-
-    target_path = os.path.join(conf.folder_path, success_folder, location_rule)
+    target_path = os.path.join(conf.folder_path, conf.success_folder(), movie.storage_dir)
     logging.debug(f"试图创建{target_path}。")
 
     if not os.path.exists(target_path):
@@ -52,9 +45,9 @@ def create_folder(
             os.makedirs(target_path)
         except:
             logging.debug("创建文件夹失败。尝试默认文件夹规则。")
-            location_rule = '-'.join([number, title[:10]])
+            location_rule = '-'.join([movie.movie_id, movie.title[:10]])
             target_path = os.path.join(
-                conf.folder_path, success_folder, location_rule)
+                conf.folder_path, conf.success_folder(), location_rule)
             logging.debug(f"试图创建{target_path}。")
             os.makedirs(target_path)
     return target_path

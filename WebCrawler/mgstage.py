@@ -18,9 +18,12 @@ def getTitle(a):
         return ''
 def getActor(a): #//*[@id="center_column"]/div[2]/div[1]/div/table/tbody/tr[1]/td/text()
     html = etree.fromstring(a, etree.HTMLParser()) #//table/tr[1]/td[1]/text()
-    result1=str(html.xpath('//th[contains(text(),"出演：")]/../td/a/text()')).strip(" ['']").strip('\\n    ').strip('\\n')
-    result2=str(html.xpath('//th[contains(text(),"出演：")]/../td/text()')).strip(" ['']").strip('\\n    ').strip('\\n')
-    return str(result1+result2).strip('+').replace("', '",'').replace('"','').replace('/',',')
+    result = html.xpath('//th[contains(text(),"出演：")]/../td/a/text()')
+    result += html.xpath('//th[contains(text(),"出演：")]/../td/text()')
+    result = [i.strip() for i in result if i.strip()]
+
+    return result
+
 def getStudio(a):
     html = etree.fromstring(a, etree.HTMLParser()) #//table/tr[1]/td[1]/text()
     result1=str(html.xpath('//th[contains(text(),"メーカー：")]/../td/a/text()')).strip(" ['']").strip('\\n    ').strip('\\n')
@@ -156,4 +159,7 @@ def main(number2):
     #print(htmlcode)
 
 if __name__ == '__main__':
-    print(main('SIRO-4384'))
+    #020RVG-077 多个可点击演出者
+    #200GANA-1283 两个不可点击演出者
+    
+    print(main('020RVG-077'))

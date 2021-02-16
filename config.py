@@ -4,8 +4,6 @@ import os
 import configparser
 import logging
 import coloredlogs
-import inspect
-import traceback
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -56,9 +54,6 @@ class Config:
             if Config._instance.debug():
                 print('[+]Enable debug')
                 coloredlogs.install(level='DEBUG')
-                frame = inspect.currentframe()
-                stack_trace = traceback.format_stack(frame)
-                logger.debug(stack_trace[:-1])
             else:
                 coloredlogs.install(level='INFO')
             logger.debug(f'读取config文件 {path}')

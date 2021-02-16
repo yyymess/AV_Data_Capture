@@ -1,9 +1,11 @@
 '''用于存储单个影片，并负责将其存入nfo文件。'''
 
+import os
 from avdc.config import Config
 from avdc.util.tag_processor import process_tags
 from avdc.util.studio_processor import process_studio
 from avdc.util.title_processor import process_title
+from typing import List
 
 class Movie:
     '''
@@ -14,15 +16,15 @@ class Movie:
     def __init__(self):
         self._title: str = ''
 
-        self._actor: [str] = []
+        self._actors: List[str] = []
 
-        self._release: str = ''
+        self.release: str = ''
 
-        self._year: str = ''
+        self.year: str = ''
 
         self._cover_small: str = ''
 
-        self._tags: [str] = ''
+        self._tags: List[str] = []
 
         self._studio: str = ''
 
@@ -34,23 +36,27 @@ class Movie:
 
         self._outline: str = ''
 
-        self._runtime: str = ''
+        self.runtime: str = ''
 
-        self._series: str = ''
+        self.series: str = ''
 
-        self._scraper_source: str = ''
+        self.scraper_source: str = ''
 
         self._label: str = ''
 
         self._trailer: str = ''
 
-        self._website: str = ''
+        self.website: str = ''
 
         self._imagecut: int = 0
 
-        self._extra_fanart: str = ''
+        self._extra_fanart: List[str] = []
+
+        self.original_path = ''
 
         self._conf: Config = Config.get_instance()
+
+
     def __repr__(self):
         return f"""
                               读取影片信息
@@ -73,13 +79,15 @@ runtime:          {self.runtime}
 series:           {self.series}
 scraper_source:   {self.scraper_source}
 label:            {self.label}
+website:          {self.website}
 imagecut:         {self.imagecut}
 extra_fanart:     {self.extra_fanart}
 storage_dir:      {self.storage_dir}
 storage_fname:    {self.storage_fname}
+original_path:    {self.original_path}
+original_fname:   {self.original_fname}
 ========================================================================
 """
-
     @property
     def title(self) -> str:
         return process_title(self._title)
@@ -92,18 +100,18 @@ storage_fname:    {self.storage_fname}
     @property
     def short_title(self) -> str:
         max_len = self._conf.max_title_len()
-        return self._title[:max_len]
+        return self.title[:max_len]
 
     @property
-    def actors(self) -> [str]:
-        return self._actor
+    def actors(self) -> List[str]:
+        return self._actors
 
     @actors.setter
-    def actors(self, value: [str]) -> None:
+    def actors(self, value: List[str]) -> None:
         if value:
             value = [i.strip() for i in value]
             value = [i for i in value if i]
-            self._actor = value
+            self._actors = value
 
     @property
     def first_actor(self) -> str:
@@ -113,38 +121,29 @@ storage_fname:    {self.storage_fname}
             return ''
 
     @property
-    def release(self) -> str:
-        return self._release.replace('/', '-')
-
-    @release.setter
-    def release(self, value: str) -> None:
-        if value:
-            self._release = value
-
-    @property
     def cover_small(self) -> str:
         return self._cover_small
 
     @cover_small.setter
     def cover_small(self, value: str) -> None:
         if value:
-            tmpArr = cover_small.split(',')
-            if len(tmpArr) > 0:
-                self._cover_small = tmpArr[0].strip('\"').strip('\'')
+            tmp_arr = value.split(',')
+            if len(tmp_arr) > 0:
+                self._cover_small = tmp_arr[0].strip('\"').strip('\'')
             else:
                 self._cover_small = value
 
     @property
-    def tags(self) -> [str]:
+    def tags(self) -> List[str]:
         return process_tags(self._tags)
 
     @tags.setter
-    def tags(self, value: [str]) -> None:
+    def tags(self, value: List[str]) -> None:
         if value:
             self._tags = value
 
     @property
-    def raw_tags(self) -> [str]:
+    def raw_tags(self) -> List[str]:
         return self._tags
 
     @property
@@ -197,33 +196,6 @@ storage_fname:    {self.storage_fname}
             self._outline = value
 
     @property
-    def runtime(self) -> str:
-        return self._runtime
-
-    @runtime.setter
-    def runtime(self, value: str) -> None:
-        if value:
-            self._runtime = value
-
-    @property
-    def series(self) -> str:
-        return self._series
-
-    @series.setter
-    def series(self, value: str) -> None:
-        if value:
-            self._series = value
-
-    @property
-    def scraper_source(self) -> str:
-        return self._scraper_source
-
-    @scraper_source.setter
-    def scraper_source(self, value: str) -> None:
-        if value:
-            self._scraper_source = value
-
-    @property
     def label(self) -> str:
         return self._label
 
@@ -234,24 +206,15 @@ storage_fname:    {self.storage_fname}
 
     @property
     def trailer(self) -> str:
-        return self._trailer
+        if self._conf.is_trailer():
+            return self._trailer
+        else:
+            return ''
 
     @trailer.setter
     def trailer(self, value: str) -> None:
         if value:
             self._trailer = value
-
-    @property
-    def website(self) -> str:
-        if self._conf.is_trailer():
-            return self._website
-        else:
-            return ''
-
-    @website.setter
-    def website(self, value: str) -> None:
-        if value:
-            self._website = value
 
     @property
     def imagecut(self) -> int:
@@ -263,14 +226,14 @@ storage_fname:    {self.storage_fname}
             self._imagecut = value
 
     @property
-    def extra_fanart(self) -> str:
+    def extra_fanart(self) -> List[str]:
         if self._conf.is_extrafanart():
             return self._extra_fanart
         else:
-            return ''
+            return []
 
     @extra_fanart.setter
-    def extra_fanart(self, value: str) -> None:
+    def extra_fanart(self, value: List[str]) -> None:
         if value:
             self._extra_fanart = value
 
@@ -300,3 +263,19 @@ storage_fname:    {self.storage_fname}
     @property
     def storage_fname(self) -> str:
         return self._eval_name(self._conf.naming_rule())
+
+    @property
+    def original_fname(self) -> str:
+        return os.path.basename(self.original_path)
+
+    def is_filled(self) -> bool:
+        """
+        Returns true if both title and movie id are filled in this object.
+        """
+        if not self.title or self.title.lower() == 'null':
+            return False
+
+        if not self.movie_id or self.movie_id.lower() == 'null':
+            return False
+
+        return True

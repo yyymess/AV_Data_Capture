@@ -5,7 +5,8 @@ import logging
 
 from typing import Optional
 from avdc.config import Config
-from avdc.util.file_mgmt import get_project_root
+from avdc.util.project_root import get_project_root
+from typing import List
 
 CSV_FNAME = "data/tag_sc_map.csv"
 
@@ -49,7 +50,7 @@ def __translate_tag_to_sc(tag: str) -> Optional[str]:
         logging.warn(f'缺失标签 {tag}')
         return tag
 
-def process_tags(tags: [str]) -> [str]:
+def process_tags(tags: List[str]) -> List[str]:
     config = Config.get_instance()
     translate_to_sc = config.translate_to_sc()
 

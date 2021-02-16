@@ -1,6 +1,5 @@
 import json
 import os
-import os.path
 import pathlib
 import re
 import shutil
@@ -9,24 +8,24 @@ import logging
 from PIL import Image
 from io import BytesIO
 
-from ADC_function import *
+from avdc.ADC_function import *
 from avdc.config import Config
-from model.movie import Movie
-from util.file_mgmt import create_folder
-from util.tag_processor import process_tags
+from avdc.model.movie import Movie
+from avdc.util.file_mgmt import create_folder
+from avdc.util.nfo_writer import write_movie_nfo
 
 # =========website========
-from WebCrawler import airav
-from WebCrawler import avsox
-from WebCrawler import fanza
-from WebCrawler import fc2
-from WebCrawler import jav321
-from WebCrawler import javbus
-from WebCrawler import javdb
-from WebCrawler import mgstage
-from WebCrawler import xcity
-from WebCrawler import javlib
-from WebCrawler import dlsite
+from avdc.WebCrawler import airav
+from avdc.WebCrawler import avsox
+from avdc.WebCrawler import fanza
+from avdc.WebCrawler import fc2
+from avdc.WebCrawler import jav321
+from avdc.WebCrawler import javbus
+from avdc.WebCrawler import javdb
+from avdc.WebCrawler import mgstage
+from avdc.WebCrawler import xcity
+from avdc.WebCrawler import javlib
+from avdc.WebCrawler import dlsite
 
 
 def escape_path(path, escape_literals: str):  # Remove escape literals
@@ -51,10 +50,11 @@ def moveFailedFolder(filepath, failed_folder):
     return
 
 
-def get_data_from_json(file_number, filepath, conf: Config):  # 从JSON返回元数据
+def get_data_from_json(file_number:str, filepath: str):  # 从JSON返回元数据
     """
     iterate through all services and fetch the data 
     """
+    conf = Config.get_instance()
 
     func_mapping = {
         "airav": airav.main,
@@ -102,7 +102,7 @@ def get_data_from_json(file_number, filepath, conf: Config):  # 从JSON返回元
     json_data = {}
     for source in sources:
         try:
-            if conf.debug() == True:
+            if conf.debug():
                 print('[+]select',source)
             json_data = json.loads(func_mapping[source](file_number))
             # if any service return a valid return, break
@@ -139,8 +139,9 @@ def get_data_from_json(file_number, filepath, conf: Config):  # 从JSON返回元
     movie.website = json_data.get('website')
     movie.imagecut = json_data.get('imagecut')
     movie.extra_fanart = json_data.get('extrafanart')
+    movie.original_path = filepath
 
-    if movie.title == '' or movie.movie_id == '':
+    if not movie.is_filled():
         print('[-]Movie Data not found!')
         moveFailedFolder(filepath, conf.failed_folder())
         return
@@ -562,23 +563,6 @@ def get_part(filepath, failed_folder):
         moveFailedFolder(filepath, failed_folder)
         return
 
-
-def debug_print(data: json):
-    try:
-        print("[+] ---Debug info---")
-        for i, v in data.items():
-            if i == 'outline':
-                print('[+]  -', i, '    :', len(v), 'characters')
-                continue
-            if i == 'actor_photo' or i == 'year':
-                continue
-            print('[+]  -', "%-11s" % i, ':', v)
-
-        print("[+] ---Debug info---")
-    except:
-        pass
-
-
 def core_main(file_path, number_th, conf: Config):
     # =======================================================================初始化所需变量
     multi_part = 0
@@ -592,21 +576,22 @@ def core_main(file_path, number_th, conf: Config):
     # 下面被注释的变量不需要
     #rootpath= os.getcwd
     number = number_th
-    json_data = get_data_from_json(number, filepath, conf)  # 定义番号
+    json_data = get_data_from_json(number, filepath)  # 定义番号
 
     # Return if blank dict returned (data not found)
     if not json_data:
         return
+    movie_obj = json_data.get('movie_obj')
 
-    if json_data["number"] != number:
+    if movie_obj.movie_id != number:
         # fix issue #119
         # the root cause is we normalize the search id
         # print_files() will use the normalized id from website,
         # but paste_file_to_folder() still use the input raw search id
         # so the solution is: use the normalized search id
-        number = json_data["number"]
-    imagecut =  json_data.get('imagecut')
-    tag =  json_data.get('tag')
+        number = movie_obj.movie_id
+    imagecut = movie_obj.imagecut
+    tag = movie_obj.tags
     # =======================================================================判断-C,-CD后缀
     if '-CD' in filepath or '-cd' in filepath:
         multi_part = 1
@@ -634,33 +619,34 @@ def core_main(file_path, number_th, conf: Config):
     #  3：不改变路径刮削 
     if conf.main_mode() == 1:
         # 创建文件夹
-        path = create_folder(conf.success_folder(),  json_data.get('location_rule'), json_data, conf)
+        path = create_folder(movie_obj, conf)
         if multi_part == 1:
             number += part  # 这时number会被附加上CD1后缀
 
         # 检查小封面, 如果image cut为3，则下载小封面
         if imagecut == 3:
-            small_cover_check(path, number,  json_data.get('cover_small'), c_word, conf, filepath, conf.failed_folder())
+            small_cover_check(path, number,  movie_obj.cover_small, c_word, conf, filepath, conf.failed_folder())
 
         # creatFolder会返回番号路径
-        image_download( json_data.get('cover'), number, c_word, path, conf, filepath, conf.failed_folder())
+        image_download(movie_obj.cover, number, c_word, path, conf, filepath, conf.failed_folder())
         try:
             # 下载预告片
-            if json_data.get('trailer'):
-                trailer_download(json_data.get('trailer'), c_word, number, path, filepath, conf, conf.failed_folder())
+            if movie_obj.trailer:
+                trailer_download(movie_obj.trailer, c_word, number, path, filepath, conf, conf.failed_folder())
         except:
             pass
         
         try:
             # 下载剧照 data, path, conf: Config, filepath, failed_folder
-            if json_data.get('extrafanart'):
-                extrafanart_download(json_data.get('extrafanart'), path, conf, filepath, conf.failed_folder())
+            if movie_obj.extra_fanart:
+                extrafanart_download(movie_obj.extra_fanart, path, conf, filepath, conf.failed_folder())
         except:
             pass
         # 裁剪图
         cutImage(imagecut, path, number, c_word)
         # 打印文件
-        print_files(path, c_word,  json_data.get('naming_rule'), part, cn_sub, json_data, filepath, conf.failed_folder(), tag,  json_data.get('actor_list'), liuchu)
+        write_movie_nfo(movie_obj, path)
+        print_files(path, c_word,  movie_obj.storage_fname, part, cn_sub, json_data, filepath, conf.failed_folder(), tag,  movie_obj.actors, liuchu)
 
         # 移动文件
         paste_file_to_folder(filepath, path, number, c_word, conf)
@@ -672,7 +658,7 @@ def core_main(file_path, number_th, conf: Config):
         
     elif conf.main_mode() == 2:
         # 创建文件夹
-        path = create_folder(conf.success_folder(), json_data.get('location_rule'), json_data, conf)
+        path = create_folder(movie_obj, conf)
         # 移动文件
         paste_file_to_folder_mode2(filepath, path, multi_part, number, part, c_word, conf)
         poster_path = path + '/' + number + c_word + '-poster.jpg'
@@ -688,25 +674,25 @@ def core_main(file_path, number_th, conf: Config):
 
         # 检查小封面, 如果image cut为3，则下载小封面
         if imagecut == 3:
-            small_cover_check(path, number, json_data.get('cover_small'), c_word, conf, filepath, conf.failed_folder())
+            small_cover_check(path, number, movie_obj.cover_small, c_word, conf, filepath, conf.failed_folder())
 
         # creatFolder会返回番号路径
-        image_download(json_data.get('cover'), number, c_word, path, conf, filepath, conf.failed_folder())
+        image_download(movie_obj.cover, number, c_word, path, conf, filepath, conf.failed_folder())
 
         # 下载预告片
-        if json_data.get('trailer'):
-            trailer_download(json_data.get('trailer'), c_word, number, path, filepath, conf, conf.failed_folder())
+        if movie_obj.trailer:
+            trailer_download(movie_obj.trailer, c_word, number, path, filepath, conf, conf.failed_folder())
 
         # 下载剧照 data, path, conf: Config, filepath, failed_folder
-        if json_data.get('extrafanart'):
-            extrafanart_download(json_data.get('extrafanart'), path, conf, filepath, conf.failed_folder())
+        if movie_obj.extra_fanart:
+            extrafanart_download(movie_obj.extra_fanart, path, conf, filepath, conf.failed_folder())
 
         # 裁剪图
         cutImage(imagecut, path, number, c_word)
 
         # 打印文件
-        print_files(path, c_word, json_data.get('naming_rule'), part, cn_sub, json_data, filepath, conf.failed_folder(),
-                    tag, json_data.get('actor_list'), liuchu)
+        print_files(path, c_word, movie_obj.storage_fname, part, cn_sub, json_data, filepath, conf.failed_folder(),
+                    tag, movie_obj.actors, liuchu)
 
         poster_path = path + '/' + number + c_word + '-poster.jpg'
         thumb_path = path + '/' + number + c_word + '-thumb.jpg'
