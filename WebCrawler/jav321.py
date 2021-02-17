@@ -3,19 +3,21 @@ sys.path.append('../')
 import json
 from bs4 import BeautifulSoup
 from lxml import html
-from ADC_function import post_html
+from avdc.ADC_function import post_html
 import re
+from avdc.model.movie import Movie
 
-
-def main(number: str) -> json:
+def main(number: str) -> Movie:
     result = post_html(url="https://www.jav321.com/search", query={"sn": number})
 
     soup = BeautifulSoup(result.text, "html.parser")
     lx = html.fromstring(str(soup))
 
+    movie = Movie()
+    
     if "/video/" in result.url:
         data = parse_info(soup)
-
+        
         dic = {
             "title": get_title(lx),
             "year": get_year(data),
@@ -30,10 +32,12 @@ def main(number: str) -> json:
             "source": "jav321.py",
             **data,
         }
-    else:
-        dic = {}
 
-    return json.dumps(dic, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ':'))
+        movie.outline = dic['outline']
+        movie.series = dic['series']
+        movie.movie_id = dic['number']
+
+    return movie
 
 def get_title(lx: html.HtmlElement) -> str:
     return lx.xpath("/html/body/div[2]/div[1]/div[1]/div[1]/h3/text()")[0].strip()
@@ -179,4 +183,5 @@ def get_series(data: hash) -> str:
 
 
 if __name__ == "__main__":
+    print(main("xrw-565"))
     print(main("jul-404"))

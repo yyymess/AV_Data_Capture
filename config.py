@@ -147,11 +147,15 @@ class Config:
     def sub_rule(self):
         return self.conf.get('media', 'sub_type').split(',')
             
-    def naming_rule(self) -> str:
-        return self.conf.get("Name_Rule", "naming_rule")
+    def nfo_title_rule(self) -> str:
+        return self.conf.get("Name_Rule", "nfo_title_rule")
 
     def location_rule(self) -> str:
         return self.conf.get("Name_Rule", "location_rule")
+
+    def filename_rule(self) -> str:
+        return self.conf.get(
+            "Name_Rule", "filename_rule", fallback="number+' '+title")
     
     def max_title_len(self) -> int:
         """
@@ -210,7 +214,8 @@ class Config:
         sec3 = "Name_Rule"
         conf.add_section(sec3)
         conf.set(sec3, "location_rule", "actor + '/' + number")
-        conf.set(sec3, "naming_rule", "number + '-' + title")
+        conf.set(sec3, "nfo_title_rule", "number + '-' + title")
+        conf.set(sec3, "filename_rule", "number + ' ' + title")
         conf.set(sec3, "max_title_len", "50")
 
         sec4 = "update"
@@ -274,7 +279,7 @@ if __name__ == "__main__":
     print(config.failed_move())
     print(config.auto_exit())
     print(config.proxy())
-    print(config.naming_rule())
+    print(config.nfo_title_rule())
     print(config.location_rule())
     print(config.update_check())
     print(config.sources())

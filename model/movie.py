@@ -1,6 +1,8 @@
 '''用于存储单个影片，并负责将其存入nfo文件。'''
 
 import os
+import re
+from avdc.model.rating import Rating
 from avdc.config import Config
 from avdc.util.tag_processor import process_tags
 from avdc.util.studio_processor import process_studio
@@ -18,13 +20,16 @@ class Movie:
 
         self._actors: List[str] = []
 
-        self.release: str = ''
+        self._release: str = ''
 
-        self.year: str = ''
+        self._year: str = ''
 
         self._cover_small: str = ''
 
         self._tags: List[str] = []
+
+        # 减少更新tag频率，因为下面的eval，debug log太多了
+        self._tag_cache: List[str] = []
 
         self._studio: str = ''
 
@@ -54,6 +59,10 @@ class Movie:
 
         self.original_path = ''
 
+        self._ratings: List[Rating] = []
+
+        self._fname_postfix = ''
+
         self._conf: Config = Config.get_instance()
 
 
@@ -67,6 +76,7 @@ director:         {self.director}
 actors:           {self.actors}
 first_actor:      {self.first_actor}
 release:          {self.release}
+year:             {self.year}
 cover:            {self.cover}
 cover_small:      {self.cover_small}
 tags:             {self.tags}
@@ -79,6 +89,7 @@ runtime:          {self.runtime}
 series:           {self.series}
 scraper_source:   {self.scraper_source}
 label:            {self.label}
+ratings:          {self.ratings}
 website:          {self.website}
 imagecut:         {self.imagecut}
 extra_fanart:     {self.extra_fanart}
@@ -135,16 +146,49 @@ original_fname:   {self.original_fname}
 
     @property
     def tags(self) -> List[str]:
-        return process_tags(self._tags)
+        return self._tag_cache
 
     @tags.setter
     def tags(self, value: List[str]) -> None:
         if value:
             self._tags = value
+            self._tag_cache = process_tags(self._tags)
+
+    def add_tag(self, val: str) -> None:
+        """往标签池内添加新标签。"""
+
+        # 有码无码不能并存,优先后加的。
+        if val == '无码' and '有码' in self._tags:
+            self._tags.remove('有码')
+        elif val == '有码' and '无码' in self._tags:
+            self._tags.remove('无码')
+
+        self._tags.append(val)
+        self._tag_cache = process_tags(self._tags)
 
     @property
     def raw_tags(self) -> List[str]:
         return self._tags
+
+    @property
+    def release(self) -> str:
+        return (self._release)
+
+    @release.setter
+    def release(self, value: str) -> None:
+        if value:
+            self._release = value
+            if re.match(r'\d{4}-\d\d?-\d\d?', self._release):
+                self._year = value[:4]
+
+    @property
+    def year(self) -> str:
+        return (self._year)
+
+    @year.setter
+    def year(self, value: str) -> None:
+        if value:
+            self._year = value
 
     @property
     def studio(self) -> str:
@@ -227,29 +271,26 @@ original_fname:   {self.original_fname}
 
     @property
     def extra_fanart(self) -> List[str]:
-        if self._conf.is_extrafanart():
-            return self._extra_fanart
-        else:
-            return []
+        return self._extra_fanart
 
     @extra_fanart.setter
     def extra_fanart(self, value: List[str]) -> None:
         if value:
             self._extra_fanart = value
 
-    def _eval_name(self, tmpl: str) -> str:
-        title = self.short_title
-        actor = ','.join(self.actors)
-        first_actor = self.first_actor
-        studio = self.studio
-        director = self.director
-        release = self.release
-        year = self.year
+    def _eval_name(self, tmpl: str, use_short_title=True) -> str:
+        title = self.short_title if use_short_title else self.title
+        actor = ','.join(self.actors) or '未知演员'
+        first_actor = self.first_actor or '未知演员'
+        studio = self.studio or '未知片商'
+        director = self.director or '未知导演'
+        release = self.release or '1970-01-01'
+        year = self.year or '1970'
         number = self.movie_id
         cover = self.cover
         tag = ','.join(self.tags)
         outline = self.outline
-        runtime = self.runtime
+        runtime = self.runtime 
         series = self.series
 
         if len(actor) > 100:
@@ -262,11 +303,40 @@ original_fname:   {self.original_fname}
 
     @property
     def storage_fname(self) -> str:
-        return self._eval_name(self._conf.naming_rule())
+        return self._eval_name(self._conf.filename_rule()) + self._fname_postfix
+
+    @property
+    def fname_postfix(self) -> str:
+        return self._fname_postfix
+    
+    @fname_postfix.setter
+    def fname_postfix(self, val: str) -> None:
+        if val:
+            self._fname_postfix = val
+
+    @property
+    def nfo_title(self) -> str:
+        return self._eval_name(self._conf.nfo_title_rule(), False)
 
     @property
     def original_fname(self) -> str:
         return os.path.basename(self.original_path)
+
+    @property
+    def ratings(self) -> List[Rating]:
+        return self._ratings
+
+    def add_rating(self,
+                   rating: float = 0.0,
+                   max_rating: float = 10,
+                   source: str = 'nfo',
+                   votes: int = 0):
+        new_rating =  Rating(rating = rating,
+                             max_rating = max_rating,
+                             source = source,
+                             votes = votes)
+        if new_rating.is_valid():
+            self._ratings.append(new_rating)
 
     def is_filled(self) -> bool:
         """

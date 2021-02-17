@@ -1,16 +1,19 @@
-import sys
-sys.path.append('../')
 import json
+from platform import release
+import time
 import bs4
 import re
+import logging
+
 from bs4 import BeautifulSoup
 from lxml import html
 from http.cookies import SimpleCookie
 
-from ADC_function import get_javlib_cookie, get_html
+from avdc.model.movie import Movie
+from avdc.ADC_function import get_javlib_cookie, get_html
 
 
-def main(number: str):
+def main(number: str) -> Movie:
     raw_cookies, user_agent = get_javlib_cookie()
 
     # Blank cookies mean javlib site return error
@@ -34,69 +37,100 @@ def main(number: str):
     soup = BeautifulSoup(result.text, "html.parser")
     lx = html.fromstring(str(soup))
     
-    fanhao_pather = re.compile(r'<a href=".*?".*?><div class="id">(.*?)</div>')
-    fanhao = fanhao_pather.findall(result.text)
-    
     if "/?v=jav" in result.url:
-        dic = {
-            "title": get_title(lx, soup),
-            "studio": get_table_el_single_anchor(soup, "video_maker"),
-            "year": get_table_el_td(soup, "video_date")[:4],
-            "outline": "",
-            "director": get_table_el_single_anchor(soup, "video_director"),
-            "cover": get_cover(lx),
-            "imagecut": 1,
-            "actor_photo": "",
-            "website": result.url,
-            "source": "javlib.py",
-            "actor": get_table_el_multi_anchor(soup, "video_cast"),
-            "label": get_table_el_td(soup, "video_label"),
-            "tag": get_table_el_multi_anchor(soup, "video_genres"),
-            "number": get_table_el_td(soup, "video_id"),
-            "release": get_table_el_td(soup, "video_date"),
-            "runtime": get_from_xpath(lx, '//*[@id="video_length"]/table/tr/td[2]/span/text()'),
-            "series":'',
-        }
-    elif number.upper() in fanhao:
-        url_pather = re.compile(r'<a href="(.*?)".*?><div class="id">(.*?)</div>')
-        s = {}
-        url_list = url_pather.findall(result.text)
-        for url in url_list:
-            s[url[1]] = 'http://www.javlibrary.com/cn/' + url[0].lstrip('.')
-        av_url = s[number.upper()]
-        result = get_html(
-            av_url,
-            cookies=cookies,
-            ua=user_agent,
-            return_type="object"
-        )
-        soup = BeautifulSoup(result.text, "html.parser")
-        lx = html.fromstring(str(soup))
-
-        dic = {
-            "title": get_title(lx, soup),
-            "studio": get_table_el_single_anchor(soup, "video_maker"),
-            "year": get_table_el_td(soup, "video_date")[:4],
-            "outline": "",
-            "director": get_table_el_single_anchor(soup, "video_director"),
-            "cover": get_cover(lx),
-            "imagecut": 1,
-            "actor_photo": "",
-            "website": result.url,
-            "source": "javlib.py",
-            "actor": get_table_el_multi_anchor(soup, "video_cast"),
-            "label": get_table_el_td(soup, "video_label"),
-            "tag": get_table_el_multi_anchor(soup, "video_genres"),
-            "number": get_table_el_td(soup, "video_id"),
-            "release": get_table_el_td(soup, "video_date"),
-            "runtime": get_from_xpath(lx, '//*[@id="video_length"]/table/tr/td[2]/span/text()'),
-            "series": '',
-        }
+        return extract_movie(lx, soup, result.url)
     else:
-        dic = {}
+        url = _find_best_movie_match(lx, number)
+        if url:
+            result = get_html(
+                url,
+                cookies=cookies,
+                ua=user_agent,
+                return_type="object"
+            )
+            soup = BeautifulSoup(result.text, "html.parser")
+            lx = html.fromstring(str(soup))
+            return extract_movie(lx, soup, result.url)
 
-    return json.dumps(dic, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ':'))
+    return Movie()
 
+def _find_best_movie_match(lx: html.HtmlElement, number: str) -> str:
+    number = number.upper()
+    vids = lx.xpath('//div[@class="videothumblist"]'
+                    '/div[@class="videos"]'
+                    '/div[@class="video"]')
+    vid_list = []
+    for v in vids:
+        title = ''.join(v.xpath('.//div[@class="title"]/text()')).strip()
+        movie_id = ''.join(v.xpath('.//div[@class="id"]/text()')).strip().upper()
+        href = ''.join(v.xpath('./a/@href')).strip()[2:]
+        url = 'http://www.javlibrary.com/cn/' + href
+        vid_list.append((title, movie_id, url))
+
+    # SNIS-459 有蓝光版，选非蓝光版
+    # ID-020 有同ID片
+    matching_list = [i for i in vid_list if i[1] == number]
+    
+    if len(matching_list) > 1:
+        logging.debug('ID搜索返回多个结果，试图清理蓝光版本。')
+        matching_list = [i for i in matching_list if 'ブルーレイ' not in i[0]]
+
+    if not matching_list:
+        return ''
+    elif len(matching_list) == 1:
+        return matching_list[0][2]
+    else:
+        logging.warning(f'多个影片出现重复ID。')
+        for i,v in enumerate(matching_list):
+            logging.warning(f'{i}: {v[0]}')
+            logging.warning(f'     {v[2]}')
+        logging.warning(f'{len(matching_list)}: 跳过')  
+        index = len(matching_list) + 1
+        while index > len(matching_list):
+            try:
+                index = int(input("选择一部影片: "))
+            except:
+                pass
+        if index < len(matching_list):
+            return matching_list[index][2]
+
+    return ''
+
+def extract_movie(lx: html.HtmlElement, soup: BeautifulSoup, url:str) -> Movie:
+    movie = Movie()
+    movie.title = get_title(lx, soup)
+    movie.studio = get_table_el_single_anchor(soup, "video_maker")
+    movie.director = get_table_el_single_anchor(soup, "video_director")
+    movie.cover = get_cover(lx)
+    movie.imagecut = 1
+    movie.website = url
+    movie.scraper_source = 'javlib'
+    movie.actors = get_table_el_multi_anchor(soup, "video_cast").split(',')
+    movie.label = get_table_el_td(soup, "video_label")
+    movie.tags = get_table_el_multi_anchor(soup, "video_genres").split(',')
+    movie.movie_id = get_table_el_td(soup, "video_id")
+    movie.release = get_table_el_td(soup, "video_date")
+    movie.runtime = get_from_xpath(
+        lx, '//*[@id="video_length"]/table/tr/td[2]/span/text()')
+
+    _add_rating(movie, lx)
+    movie.add_tag('日本')
+    movie.add_tag('有码')
+
+    return movie
+
+def _add_rating(movie: Movie, lx: html.HtmlElement) -> None:
+    score = lx.xpath('//*[@id="video_review"]//span[@class="score"]/text()')
+    if not score:
+        return
+    try:
+        score = float(score[0].strip('( )'))
+        movie.add_rating(rating = score,
+                         source = 'javlib',
+                         max_rating = 10.0)
+    except:
+        pass
+    
 
 def get_from_xpath(lx: html.HtmlElement, xpath: str) -> str:
     return lx.xpath(xpath)[0].strip()
@@ -145,7 +179,8 @@ def get_cover(lx: html.HtmlComment) -> str:
 
 
 if __name__ == "__main__":
-    lists = ["DVMC-003", "GS-0167", "JKREZ-001", "KMHRS-010", "KNSD-023"]
-    #lists = ["DVMC-003"]
+    #lists = ["DVMC-003", "GS-0167", "JKREZ-001", "KMHRS-010", "KNSD-023", "ARM-072"]
+    lists = ["DASD-802"]
     for num in lists:
         print(main(num))
+        time.sleep(3)
