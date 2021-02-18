@@ -101,7 +101,7 @@ def post_html(url: str, query: dict, headers: dict = None) -> requests.Response:
     print("[-]Connect Failed! Please check your Proxy or Network!")
 
 
-def get_javlib_cookie() -> [dict, str]:
+def get_javlib_cookie() -> tuple[dict, str]:
     import cloudscraper
     switch, proxy, timeout, retry_count, proxytype = Config.get_instance().proxy()
     proxies = get_proxy(proxy, proxytype)

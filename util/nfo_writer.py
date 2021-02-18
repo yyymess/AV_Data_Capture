@@ -1,4 +1,5 @@
-'''将一个movie对象中的元数据写入对应的nfo文件'''
+"""将一个movie对象中的元数据写入对应的nfo文件"""
+
 import logging
 import os
 import xml.etree.ElementTree as ET
@@ -81,9 +82,17 @@ def _add_series(movie: Movie, root: ET.Element) -> None:
 def _add_actors(movie: Movie, root: ET.Element) -> None:
     if not movie.actors:
         return
-    for actor in movie.actors:
+    actors = movie.actors
+    raw_actors = movie.raw_actors
+
+    for actor in actors:
         actor_elem = ET.SubElement(root, 'actor')
         ET.SubElement(actor_elem, 'name').text = actor
+
+    # 如果女优被重命名过的话把原始的记录下来。
+    if set(raw_actors) - set(actors):
+        for actor in raw_actors:
+            ET.SubElement(root, 'original_actor').text = actor
 
 
 def _add_tags(movie: Movie, root: ET.Element) -> None:

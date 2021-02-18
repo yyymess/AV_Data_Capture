@@ -2,10 +2,12 @@
 用于生成女优姓名对照表。 没事手动执行一下既可。
 暂行方案：
 - 使用github.com/xinxin8816/gfriends的json文件获取一对一参照
-- 使用1:1 map生成多对1lookup
+- 使用1:1 map生成每个名字被映射次数的列表
 - 使用每个名称出现的频率来判断哪个名字为主要名，假设高频用名同时代表更多图像文件
 - 输出csv，模式为
   主要名，别名，别名，别名。。。。
+
+这货实际上应该可以在使用时动态调用gfriends的数据库，不过本地化了能减少一个point of failure.
 """
 
 import csv
@@ -15,20 +17,20 @@ import sys
 from collections import Counter, defaultdict
 from collections.abc import Iterable
 from traceback import format_exc
-from avdc.util.project_root import get_project_root
 
 import requests
+from avdc.util.project_root import get_project_root
+
 
 def gen_file() -> None:
     dupe_list = reduce_gfriends_map()
     print(f'√ 共检测到{len(dupe_list):,}位重名女友。')
 
-    output_filepath = os.path.join(
-        get_project_root(), 'data', 'actor_dupe_map.csv')
+    output_filepath = os.path.join(get_project_root(), 'data',
+                                   'actor_dupe_map.csv')
     with open(output_filepath, 'w', newline='', encoding='utf-8') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerows(dupe_list)
-
 
 
 def reduce_gfriends_map() -> list[str]:

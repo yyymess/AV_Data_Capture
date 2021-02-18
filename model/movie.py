@@ -2,12 +2,12 @@
 
 import os
 import re
+from util.actor_processor import process_actors
 from avdc.model.rating import Rating
 from avdc.config import Config
 from avdc.util.tag_processor import process_tags
 from avdc.util.studio_processor import process_studio
 from avdc.util.title_processor import process_title
-from typing import List
 
 class Movie:
     '''
@@ -18,7 +18,7 @@ class Movie:
     def __init__(self):
         self._title: str = ''
 
-        self._actors: List[str] = []
+        self._actors: list[str] = []
 
         self._release: str = ''
 
@@ -26,10 +26,10 @@ class Movie:
 
         self._cover_small: str = ''
 
-        self._tags: List[str] = []
+        self._tags: list[str] = []
 
         # 减少更新tag频率，因为下面的eval，debug log太多了
-        self._tag_cache: List[str] = []
+        self._tag_cache: list[str] = []
 
         self._studio: str = ''
 
@@ -55,11 +55,11 @@ class Movie:
 
         self._imagecut: int = 0
 
-        self._extra_fanart: List[str] = []
+        self._extra_fanart: list[str] = []
 
         self.original_path = ''
 
-        self._ratings: List[Rating] = []
+        self._ratings: list[Rating] = []
 
         self._fname_postfix = ''
 
@@ -74,6 +74,7 @@ title:            {self.title}
 short_title:      {self.short_title}
 director:         {self.director}
 actors:           {self.actors}
+raw_actors:       {self.raw_actors}
 first_actor:      {self.first_actor}
 release:          {self.release}
 year:             {self.year}
@@ -114,11 +115,11 @@ original_fname:   {self.original_fname}
         return self.title[:max_len]
 
     @property
-    def actors(self) -> List[str]:
-        return self._actors
+    def actors(self) -> list[str]:
+        return process_actors(self._actors)
 
     @actors.setter
-    def actors(self, value: List[str]) -> None:
+    def actors(self, value: list[str]) -> None:
         if value:
             value = [i.strip() for i in value]
             value = [i for i in value if i]
@@ -130,6 +131,10 @@ original_fname:   {self.original_fname}
             return self.actors[0]
         else:
             return ''
+
+    @property
+    def raw_actors(self) -> list[str]:
+        return self._actors
 
     @property
     def cover_small(self) -> str:
@@ -145,11 +150,11 @@ original_fname:   {self.original_fname}
                 self._cover_small = value
 
     @property
-    def tags(self) -> List[str]:
+    def tags(self) -> list[str]:
         return self._tag_cache
 
     @tags.setter
-    def tags(self, value: List[str]) -> None:
+    def tags(self, value: list[str]) -> None:
         if value:
             self._tags = value
             self._tag_cache = process_tags(self._tags)
@@ -167,7 +172,7 @@ original_fname:   {self.original_fname}
         self._tag_cache = process_tags(self._tags)
 
     @property
-    def raw_tags(self) -> List[str]:
+    def raw_tags(self) -> list[str]:
         return self._tags
 
     @property
@@ -270,11 +275,11 @@ original_fname:   {self.original_fname}
             self._imagecut = value
 
     @property
-    def extra_fanart(self) -> List[str]:
+    def extra_fanart(self) -> list[str]:
         return self._extra_fanart
 
     @extra_fanart.setter
-    def extra_fanart(self, value: List[str]) -> None:
+    def extra_fanart(self, value: list[str]) -> None:
         if value:
             self._extra_fanart = value
 
@@ -323,7 +328,7 @@ original_fname:   {self.original_fname}
         return os.path.basename(self.original_path)
 
     @property
-    def ratings(self) -> List[Rating]:
+    def ratings(self) -> list[Rating]:
         return self._ratings
 
     def add_rating(self,
