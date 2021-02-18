@@ -5,6 +5,7 @@ import re
 import sys
 import shutil
 import logging
+import time
 from pathlib import Path
 
 from avdc.config import Config
@@ -172,6 +173,8 @@ if __name__ == '__main__':
             percentage = str(count / int(count_all) * 100)[:4] + '%'
             print('[!] - ' + percentage + ' [' + str(count) + '/' + count_all + '] -')
             create_data_and_move(movie_path, conf, conf.debug())
+            # 休息3秒，防封
+            time.sleep(3)
 
     rm_empty_success_failed_folder(conf)
     print("[+]All finished!!!")

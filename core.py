@@ -119,6 +119,7 @@ def get_data_from_json(file_number:str, filepath: str):  # 从JSON返回元数�
                 if get_data_state(json_data):
                     break
         except:
+            traceback.print_exc()
             break
 
     # Return if data not found in all sources
@@ -431,7 +432,7 @@ def paste_file_to_folder(movie: Movie, filepath, path, conf: Config):  # 文件�
         if conf.soft_link():
             os.symlink(filepath, path + '/' + movie.storage_fname + houzhui)
         else:
-            os.rename(filepath, path + '/' + movie.storage_fname + houzhui)
+            os.rename(filepath, os.path.join(path, movie.storage_fname + houzhui))
         sub_res = conf.sub_rule()
         
         for subname in sub_res:

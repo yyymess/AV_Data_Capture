@@ -32,10 +32,11 @@ def main(number: str) -> Movie:
             "source": "jav321.py",
             **data,
         }
-
+        
         movie.outline = dic['outline']
         movie.series = dic['series']
         movie.movie_id = dic['number']
+        movie.extra_fanart = dic['extrafanart']
 
     return movie
 

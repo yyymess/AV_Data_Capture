@@ -111,5 +111,6 @@ venv.bak/
 JAV_output/**/*
 failed/*
 
-# emacs tmp
+# emacs
 \#*#
+.projectile

@@ -8,13 +8,15 @@ def main(number: str) -> Movie:
     javlib_scrap = javlib.main(number)
     if not javlib_scrap.is_filled():
         return javlib_scrap
-
-    if not javlib_scrap.outline or not javlib_scrap.series:
-        jav321_scrip = jav321.main(javlib_scrap.movie_id)
-        if jav321_scrip.movie_id.upper() == javlib_scrap.movie_id.upper():
-            javlib_scrap.series = jav321_scrip.series
-            javlib_scrap.outline = jav321_scrip.outline
-
+    
+    jav321_scrip = jav321.main(javlib_scrap.movie_id)
+    if jav321_scrip.movie_id.upper() == javlib_scrap.movie_id.upper():
+        javlib_scrap.series = javlib_scrap.series or jav321_scrip.series
+        javlib_scrap.outline = javlib_scrap.outline or jav321_scrip.outline
+        javlib_scrap.extra_fanart = (javlib_scrap.extra_fanart
+                                     or jav321_scrip.extra_fanart)
+            
+            
     return javlib_scrap
 
 if __name__ == "__main__":

@@ -7,16 +7,17 @@ import xml.etree.ElementTree as ET
 from avdc.model.movie import Movie
 
 def write_movie_nfo(movie: Movie, dir_path: str) -> bool:
-    file_path = os.path.join(dir_path, movie.storage_fname + '_test.nfo')
+    file_path = os.path.join(dir_path, movie.storage_fname + '.nfo')
 
     # create the file structure
     root = ET.Element('movie')
 
-    ET.SubElement(root, 'title').text = movie.title
+    ET.SubElement(root, 'title').text = movie.nfo_title
 
     if movie.studio:
         ET.SubElement(root, 'studio').text = movie.studio
-        ET.SubElement(root, 'original_studio').text = movie.raw_studio
+        if movie.studio != movie.raw_studio:
+            ET.SubElement(root, 'original_studio').text = movie.raw_studio
         ET.SubElement(root, 'maker').text = movie.studio
 
     _add_series(movie, root)
