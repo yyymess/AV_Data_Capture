@@ -1,17 +1,20 @@
 import sys
+
 sys.path.append('../')
 import json
+import re
+
+from avdc.ADC_function import post_html
+from avdc.model.movie import Movie 
 from bs4 import BeautifulSoup
 from lxml import html
-from avdc.ADC_function import post_html
-import re
-from avdc.model.movie import Movie
 
+ 
 def main(number: str) -> Movie:
     result = post_html(url="https://www.jav321.com/search", query={"sn": number})
 
     soup = BeautifulSoup(result.text, "html.parser")
-    lx = html.fromstring(str(soup))
+    lx = html.fromstring(str(soup)) 
 
     movie = Movie()
     
