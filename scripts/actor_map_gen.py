@@ -28,8 +28,11 @@ def gen_file() -> None:
 
     output_filepath = os.path.join(get_project_root(), 'data',
                                    'actor_dupe_map.csv')
-    with open(output_filepath, 'w', newline='', encoding='utf-8') as csvfile:
+    with open(output_filepath, 'wt', newline='', encoding='utf-8') as csvfile:
         writer = csv.writer(csvfile)
+        csvfile.write('# 女优名, 别名…………')
+        # 用csv来换行保证换行符一致性。
+        writer.writerow([])
         writer.writerows(dupe_list)
 
 
@@ -61,6 +64,7 @@ def reduce_gfriends_map() -> list[str]:
             # 没有重名的女优，可以无视了
             continue
         result_list.append(actors)
+    result_list.sort()
     return result_list
 
 
@@ -92,7 +96,9 @@ def get_gfriends_map() -> Iterable[tuple[str, str]]:
         second_lvls = map_json[first].keys()
         for second in second_lvls:
             for k, v in map_json[first][second].items():
-                output[os.path.splitext(k)[0]] = os.path.splitext(v)[0]
+                # 处理据库内个别错误信息
+                if '???' not in k+v:
+                    output[os.path.splitext(k)[0]] = os.path.splitext(v)[0]
     print('√ 连接 Gfriends 女友头像仓库成功')
     return output.items()
 
