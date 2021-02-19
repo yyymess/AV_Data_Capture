@@ -9,28 +9,13 @@ import os
 from avdc import config
 from avdc.model.movie import Movie
 
+logger = logging.getLogger(__name__)
+
 def dir_picker() -> str:
-    '''询问用户并返回一个文件夹'''
+    """询问用户并返回一个文件夹"""
     root = Tk()
     root.withdraw()
     return filedialog.askdirectory()
-
-def get_info(json_data):  # TODO: 优化
-    title = json_data.get('title')
-    studio = json_data.get('studio')
-    year = json_data.get('year')
-    outline = json_data.get('outline')
-    runtime = json_data.get('runtime')
-    director = json_data.get('director')
-    actor_photo = json_data.get('actor_photo')
-    release = json_data.get('release')
-    number = json_data.get('number')
-    cover = json_data.get('cover')
-    trailer = json_data.get('trailer')
-    website = json_data.get('website')
-    series = json_data.get('series')
-    label = json_data.get('label', "")
-    return title, studio, year, outline, runtime, director, actor_photo, release, number, cover, trailer, website, series, label
 
 def create_folder(
         movie: Movie,
@@ -38,17 +23,17 @@ def create_folder(
     """为每部影片建立对应的文件夹。"""
 
     target_path = os.path.join(conf.folder_path, conf.success_folder(), movie.storage_dir)
-    logging.debug(f"试图创建{target_path}。")
+    logger.debug(f"试图创建{target_path}。")
 
     if not os.path.exists(target_path):
         try:
             os.makedirs(target_path)
         except:
-            logging.debug("创建文件夹失败。尝试默认文件夹规则。")
+            logger.debug("创建文件夹失败。尝试默认文件夹规则。")
             location_rule = '-'.join([movie.movie_id, movie.title[:10]])
             target_path = os.path.join(
                 conf.folder_path, conf.success_folder(), location_rule)
-            logging.debug(f"试图创建{target_path}。")
+            logger.debug(f"试图创建{target_path}。")
             os.makedirs(target_path)
     return target_path
 
@@ -59,10 +44,10 @@ def create_success_failed_folder(conf: config.Config) -> bool:
         path = os.path.join(conf.folder_path, d)
         if not os.path.isdir(path):
             try:
-                logging.debug(f"试图创建{path}。")
+                logger.debug(f"试图创建{path}。")
                 os.makedirs(path)
             except:
-                logging.debug("创建失败")
+                logger.debug("创建失败")
                 return False
     return True
 
@@ -73,7 +58,7 @@ def rm_empty_success_failed_folder(conf: config.Config) -> None:
         for dirpath, _, _ in os.walk(root_path, topdown=False):
             if not os.listdir(dirpath):
                 try:
-                    logging.info(f"试图删除空文件夹{dirpath}。")
+                    logger.info(f"试图删除空文件夹{dirpath}。")
                     os.rmdir(dirpath)
                 except OSError as ex:
-                    logging.debug("删除失败")
+                    logger.debug("删除失败")

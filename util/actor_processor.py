@@ -9,6 +9,7 @@ from avdc.util.project_root import get_project_root
 CSV_FNAME = 'data/actor_dupe_map.csv'
 
 actor_map = {}
+logger = logging.getLogger(__name__)
 
 
 def process_actors(actors: list[str]) -> list[str]:
@@ -17,7 +18,7 @@ def process_actors(actors: list[str]) -> list[str]:
 
 
 def _parse_actor_map():
-    logging.debug('试图载入女优查重文件。')
+    logger.debug('试图载入女优查重文件。')
     csv_path = os.path.join(get_project_root(), CSV_FNAME)
 
     for row in read_csv(csv_path):

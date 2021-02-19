@@ -1,33 +1,40 @@
 import argparse
 import json
+import logging
 import os
 import re
-import sys
 import shutil
-import logging
+import sys
 import time
 from pathlib import Path
 
-from avdc.config import Config
 from ADC_function import get_html
-from util.file_mgmt import dir_picker, create_success_failed_folder, rm_empty_success_failed_folder
-from number_parser import get_number
+from avdc.config import Config
 from core import core_main
+from number_parser import get_number
+from util.file_mgmt import (create_success_failed_folder, dir_picker,
+                            rm_empty_success_failed_folder)
+
+logger = logging.getLogger('avdc')
 
 
 def check_update(local_version):
     try:
-        data = json.loads(get_html("https://api.github.com/repos/yoshiko2/AV_Data_Capture/releases/latest"))
+        data = json.loads(
+            get_html(
+                "https://api.github.com/repos/yoshiko2/AV_Data_Capture/releases/latest"
+            ))
     except:
         print("[-]Failed to update! Please check new version manually:")
         print("[-] https://github.com/yoshiko2/AV_Data_Capture/releases")
         print("[*]======================================================")
         return
 
-    remote = data["tag_name"].replace(".","")
+    remote = data["tag_name"].replace(".", "")
     local_version = local_version.replace(".", "")
     if not local_version > remote:
-        print("[*]" + ("* New update " + str(data["tag_name"]) + " *").center(54))
+        print("[*]" +
+              ("* New update " + str(data["tag_name"]) + " *").center(54))
         print("[*]" + "↓ Download ↓".center(54))
         print("[*]https://github.com/yoshiko2/AV_Data_Capture/releases")
         print("[*]======================================================")
@@ -35,11 +42,29 @@ def check_update(local_version):
 
 def argparse_function(ver: str) -> [str, str, bool]:
     parser = argparse.ArgumentParser()
-    parser.add_argument("file", default='', nargs='?', help="Single Movie file path.")
-    parser.add_argument("-p","--path",default='',nargs='?',help="Analysis folder path.")
-    parser.add_argument("-c", "--config", default='config.ini', nargs='?', help="The config file Path.")
-    parser.add_argument("-n", "--number", default='', nargs='?', help="Custom file number")
-    parser.add_argument("-a", "--auto-exit", dest='autoexit', action="store_true",
+    parser.add_argument("file",
+                        default='',
+                        nargs='?',
+                        help="Single Movie file path.")
+    parser.add_argument("-p",
+                        "--path",
+                        default='',
+                        nargs='?',
+                        help="Analysis folder path.")
+    parser.add_argument("-c",
+                        "--config",
+                        default='config.ini',
+                        nargs='?',
+                        help="The config file Path.")
+    parser.add_argument("-n",
+                        "--number",
+                        default='',
+                        nargs='?',
+                        help="Custom file number")
+    parser.add_argument("-a",
+                        "--auto-exit",
+                        dest='autoexit',
+                        action="store_true",
                         help="Auto exit after program complete")
     parser.add_argument("-v", "--version", action="version", version=ver)
     args = parser.parse_args()
@@ -78,12 +103,14 @@ def create_data_and_move(file_path: str, c: Config, debug):
     file_path = os.path.abspath(file_path)
 
     if debug == True:
-        print("[!]Making Data for [{}], the number is [{}]".format(file_path, n_number))
+        print("[!]Making Data for [{}], the number is [{}]".format(
+            file_path, n_number))
         core_main(file_path, n_number, c)
         print("[*]======================================================")
     else:
         try:
-            print("[!]Making Data for [{}], the number is [{}]".format(file_path, n_number))
+            print("[!]Making Data for [{}], the number is [{}]".format(
+                file_path, n_number))
             core_main(file_path, n_number, c)
             print("[*]======================================================")
         except Exception as err:
@@ -101,15 +128,19 @@ def create_data_and_move(file_path: str, c: Config, debug):
                     os.symlink(file_path, conf.failed_folder() + "/")
                 else:
                     try:
-                        print("[-]Move [{}] to failed folder".format(file_path))
+                        print(
+                            "[-]Move [{}] to failed folder".format(file_path))
                         shutil.move(file_path, conf.failed_folder() + "/")
                     except Exception as err:
                         print('[!]', err)
 
 
-def create_data_and_move_with_custom_number(file_path: str, c: Config, custom_number=None):
+def create_data_and_move_with_custom_number(file_path: str,
+                                            c: Config,
+                                            custom_number=None):
     try:
-        print("[!]Making Data for [{}], the number is [{}]".format(file_path, custom_number))
+        print("[!]Making Data for [{}], the number is [{}]".format(
+            file_path, custom_number))
         core_main(file_path, custom_number, c)
         print("[*]======================================================")
     except Exception as err:
@@ -131,7 +162,8 @@ if __name__ == '__main__':
     version = '4.4.1'
 
     # Parse command line args
-    single_file_path, folder_path, config_file, custom_number, auto_exit = argparse_function(version)
+    single_file_path, folder_path, config_file, custom_number, auto_exit = argparse_function(
+        version)
 
     print('[*]================== AV Data Capture ===================')
     print('[*]' + version.center(54))
@@ -153,17 +185,19 @@ if __name__ == '__main__':
             folder_path = dir_picker()
         conf.folder_path = folder_path
     if not conf.folder_path:
-        logging.error('无法定位根文件夹。')
+        logger.critical('无法定位根文件夹。', exc_info=True)
         sys.exit(0)
 
     if not create_success_failed_folder(conf):
         sys.exit(0)
 
-    if single_file_path: #Single File
+    if single_file_path:  #Single File
         print('[+]==================== Single File =====================')
-        create_data_and_move_with_custom_number(single_file_path, conf, custom_number)
+        create_data_and_move_with_custom_number(single_file_path, conf,
+                                                custom_number)
     else:
-        movie_list = movie_lists(folder_path, re.split("[,，]", conf.escape_folder()))
+        movie_list = movie_lists(folder_path,
+                                 re.split("[,，]", conf.escape_folder()))
 
         count = 0
         count_all = str(len(movie_list))
@@ -171,7 +205,8 @@ if __name__ == '__main__':
         for movie_path in movie_list:  # 遍历电影列表 交给core处理
             count = count + 1
             percentage = str(count / int(count_all) * 100)[:4] + '%'
-            print('[!] - ' + percentage + ' [' + str(count) + '/' + count_all + '] -')
+            print('[!] - ' + percentage + ' [' + str(count) + '/' + count_all +
+                  '] -')
             create_data_and_move(movie_path, conf, conf.debug())
             # 休息3秒，防封
             time.sleep(3)
@@ -179,5 +214,7 @@ if __name__ == '__main__':
     rm_empty_success_failed_folder(conf)
     print("[+]All finished!!!")
     if not (conf.auto_exit() or auto_exit):
-        input("Press enter key exit, you can check the error message before you exit...")
+        input(
+            "Press enter key exit, you can check the error message before you exit..."
+        )
     sys.exit(0)

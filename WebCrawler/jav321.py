@@ -1,53 +1,40 @@
-import sys
-
-sys.path.append('../')
-import json
 import re
 
 from avdc.ADC_function import post_html
-from avdc.model.movie import Movie 
+from avdc.model.movie import Movie
 from bs4 import BeautifulSoup
 from lxml import html
 
- 
+
 def main(number: str) -> Movie:
-    result = post_html(url="https://www.jav321.com/search", query={"sn": number})
+    result = post_html(url="https://www.jav321.com/search",
+                       query={"sn": number})
 
     soup = BeautifulSoup(result.text, "html.parser")
-    lx = html.fromstring(str(soup)) 
+    lx = html.fromstring(str(soup))
 
     movie = Movie()
-    
+
     if "/video/" in result.url:
-        data = parse_info(soup)
-        
-        dic = {
-            "title": get_title(lx),
-            "year": get_year(data),
-            "outline": get_outline(lx),
-            "director": "",
-            "cover": get_cover(lx),
-            "imagecut": 1,
-            "trailer": get_trailer(result.text),
-            "extrafanart": get_extrafanart(result.text),
-            "actor_photo": "",
-            "website": result.url,
-            "source": "jav321.py",
-            **data,
-        }
-        
-        movie.outline = dic['outline']
-        movie.series = dic['series']
-        movie.movie_id = dic['number']
-        movie.extra_fanart = dic['extrafanart']
+        parse_info(soup, movie)
+        movie.title = get_title(lx)
+        movie.outline = get_outline(lx)
+        movie.cover = get_cover(lx)
+        movie.extra_fanart = get_extrafanart(result.text)
+        movie.trailer = get_trailer(result.text)
+        movie.imagecut = 1
+        movie.scraper_source = 'jav321'
+        movie.website = result.url
 
     return movie
 
+
 def get_title(lx: html.HtmlElement) -> str:
-    return lx.xpath("/html/body/div[2]/div[1]/div[1]/div[1]/h3/text()")[0].strip()
+    return lx.xpath(
+        "/html/body/div[2]/div[1]/div[1]/div[1]/h3/text()")[0].strip()
 
 
-def parse_info(soup: BeautifulSoup) -> dict:
+def parse_info(soup: BeautifulSoup, movie: Movie) -> None:
     data = soup.select_one("div.row > div.col-md-9")
 
     if data:
@@ -56,18 +43,13 @@ def parse_info(soup: BeautifulSoup) -> dict:
         for d in dd:
             data_dic[get_bold_text(h=d)] = d
 
-        return {
-            "actor": get_actor(data_dic),
-            "label": get_label(data_dic),
-            "studio": get_studio(data_dic),
-            "tag": get_tag(data_dic),
-            "number": get_number(data_dic),
-            "release": get_release(data_dic),
-            "runtime": get_runtime(data_dic),
-            "series": get_series(data_dic),
-        }
-    else:
-        return {}
+        movie.actors = get_actor(data_dic)
+        movie.studio = get_studio(data_dic)
+        movie.tags = get_tag(data_dic)
+        movie.release = get_release(data_dic)
+        movie.runtime = get_runtime(data_dic)
+        movie.series = get_series(data_dic)
+        movie.movie_id = get_number(data_dic)
 
 
 def get_bold_text(h: str) -> str:
@@ -91,17 +73,23 @@ def get_anchor_info(h: str) -> str:
 def get_text_info(h: str) -> str:
     return h.split(": ")[1]
 
+
 def get_trailer(html) -> str:
     videourl_pather = re.compile(r'<source src=\"(.*?)\"')
     videourl = videourl_pather.findall(html)
     if videourl:
-        url = videourl[0].replace('awscc3001.r18.com', 'cc3001.dmm.co.jp').replace('cc3001.r18.com', 'cc3001.dmm.co.jp')
+        url = videourl[0].replace('awscc3001.r18.com',
+                                  'cc3001.dmm.co.jp').replace(
+                                      'cc3001.r18.com', 'cc3001.dmm.co.jp')
         return url
     else:
         return ''
 
+
 def get_extrafanart(htmlcode):  # 获取剧照
-    html_pather = re.compile(r'<div class=\"col\-md\-3\"><div class=\"col\-xs\-12 col\-md\-12\">[\s\S]*?</script><script async src=\"\/\/adserver\.juicyads\.com/js/jads\.js\">')
+    html_pather = re.compile(
+        r'<div class=\"col\-md\-3\"><div class=\"col\-xs\-12 col\-md\-12\">[\s\S]*?</script><script async src=\"\/\/adserver\.juicyads\.com/js/jads\.js\">'
+    )
     html = html_pather.search(htmlcode)
     if html:
         html = html.group()
@@ -111,37 +99,33 @@ def get_extrafanart(htmlcode):  # 获取剧照
             return extrafanart_imgs
     return ''
 
+
 def get_cover(lx: html.HtmlElement) -> str:
     return lx.xpath("/html/body/div[2]/div[2]/div[1]/p/a/img/@src")[0]
 
 
 def get_outline(lx: html.HtmlElement) -> str:
-    return lx.xpath("/html/body/div[2]/div[1]/div[1]/div[2]/div[3]/div/text()")[0]
+    return lx.xpath(
+        "/html/body/div[2]/div[1]/div[1]/div[2]/div[3]/div/text()")[0]
+
 
 def get_series2(lx: html.HtmlElement) -> str:
-    return lx.xpath("/html/body/div[2]/div[1]/div[1]/div[2]/div[1]/div[2]/a[11]/text()")[0]
+    return lx.xpath(
+        "/html/body/div[2]/div[1]/div[1]/div[2]/div[1]/div[2]/a[11]/text()")[0]
 
 
-def get_actor(data: hash) -> str:
+def get_actor(data: hash) -> list[str]:
     if "出演者" in data:
-        return get_anchor_info(data["出演者"])
+        return get_anchor_info(data["出演者"]).split(',')
     else:
-        return ""
+        return []
 
 
-def get_label(data: hash) -> str:
-    if "メーカー" in data:
-        return get_anchor_info(data["メーカー"])
-    else:
-        return ""
-
-
-def get_tag(data: hash) -> str:
+def get_tag(data: hash) -> list[str]:
     if "ジャンル" in data:
-        return get_anchor_info(data["ジャンル"])
+        return get_anchor_info(data["ジャンル"]).split(',')
     else:
-        return ""
-
+        return []
 
 
 def get_studio(data: hash) -> str:

@@ -1,13 +1,15 @@
-'''用于存储单个影片，并负责将其存入nfo文件。'''
+"""用于存储单个影片，并负责将其存入nfo文件。"""
 
 import os
 import re
-from util.actor_processor import process_actors
-from avdc.model.rating import Rating
+
 from avdc.config import Config
-from avdc.util.tag_processor import process_tags
+from avdc.model.rating import Rating
 from avdc.util.studio_processor import process_studio
+from avdc.util.tag_processor import process_tags
 from avdc.util.title_processor import process_title
+from avdc.util.actor_processor import process_actors
+
 
 class Movie:
     '''
@@ -65,7 +67,6 @@ class Movie:
 
         self._conf: Config = Config.get_instance()
 
-
     def __repr__(self):
         return f"""
                               读取影片信息
@@ -94,12 +95,14 @@ ratings:          {self.ratings}
 website:          {self.website}
 imagecut:         {self.imagecut}
 extra_fanart:     {self.extra_fanart}
+trailer:     {self.trailer}
 storage_dir:      {self.storage_dir}
 storage_fname:    {self.storage_fname}
 original_path:    {self.original_path}
 original_fname:   {self.original_fname}
 ========================================================================
 """
+
     @property
     def title(self) -> str:
         return process_title(self._title)
@@ -295,7 +298,7 @@ original_fname:   {self.original_fname}
         cover = self.cover
         tag = ','.join(self.tags)
         outline = self.outline
-        runtime = self.runtime 
+        runtime = self.runtime
         series = self.series
 
         if len(actor) > 100:
@@ -308,12 +311,13 @@ original_fname:   {self.original_fname}
 
     @property
     def storage_fname(self) -> str:
-        return self._eval_name(self._conf.filename_rule()) + self._fname_postfix
+        return self._eval_name(
+            self._conf.filename_rule()) + self._fname_postfix
 
     @property
     def fname_postfix(self) -> str:
         return self._fname_postfix
-    
+
     @fname_postfix.setter
     def fname_postfix(self, val: str) -> None:
         if val:
@@ -336,10 +340,10 @@ original_fname:   {self.original_fname}
                    max_rating: float = 10,
                    source: str = 'nfo',
                    votes: int = 0):
-        new_rating =  Rating(rating = rating,
-                             max_rating = max_rating,
-                             source = source,
-                             votes = votes)
+        new_rating = Rating(rating=rating,
+                            max_rating=max_rating,
+                            source=source,
+                            votes=votes)
         if new_rating.is_valid():
             self._ratings.append(new_rating)
 

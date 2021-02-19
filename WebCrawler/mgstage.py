@@ -1,16 +1,11 @@
-import sys
-sys.path.append('../')
+import logging
 import re
 from lxml import etree
-import json
 from bs4 import BeautifulSoup
 from avdc.ADC_function import *
 from avdc.model.movie import Movie
 
-# import sys
-# import io
-# sys.stdout = io.TextIOWrapper(sys.stdout.buffer, errors = 'replace', line_buffering = True)
-
+logger = logging.getLogger(__name__)
 def getTitle(a):
     try:
         html = etree.fromstring(a, etree.HTMLParser())
@@ -100,10 +95,13 @@ def _set_rating(movie: Movie, htmlcode) -> None:
     result = html.xpath('//th[contains(text(),"評価")]/../td/text()')
     result = ''.join([i.strip() for i in result])
 
-    movie.add_rating(rating = float(result[:3]),
-                     votes = int(result[4:].split(' ')[0]),
-                     source = 'mgstage',
-                     max_rating = 5.0)
+    try:
+        movie.add_rating(rating = float(result[:3]),
+                         votes = int(result[4:].split(' ')[0]),
+                         source = 'mgstage',
+                         max_rating = 5.0)
+    except:
+        logger.warn('获取评分失败。')
 
 def main(number2) -> Movie:
     number=number2.upper()

@@ -28,7 +28,7 @@ class Config:
 
         for p in config_paths:
             if os.path.exists(p):
-                logger.debug(f'试图载入 {p}')
+                logger.info(f'试图载入 {p}')
                 parser = configparser.ConfigParser()
                 try:
                     parser.read(p, encoding="utf-8-sig")
@@ -46,16 +46,18 @@ class Config:
 
     @staticmethod
     def get_instance(path: str = 'config.ini') -> Config:
+        avdc_logger = logging.getLogger('avdc')
+        coloredlogs.install(level='INFO', logger=avdc_logger,
+                            fmt = '%(name)s[%(process)d] %(levelname)s %(message)s')
+
         if Config._instance is None:
-
-            coloredlogs.install(level='DEBUG')
             Config(path)
-
             if Config._instance.debug():
-                print('[+]Enable debug')
-                coloredlogs.install(level='DEBUG')
-            else:
-                coloredlogs.install(level='INFO')
+                coloredlogs.install(level='DEBUG', logger=avdc_logger,
+                            fmt = '%(name)s[%(process)d] %(levelname)s %(message)s')
+                print('Logger设定为DEBUG模式。')
+                logger.debug('Logger设定为DEBUG模式。')
+
             logger.debug(f'读取config文件 {path}')
         return Config._instance
 

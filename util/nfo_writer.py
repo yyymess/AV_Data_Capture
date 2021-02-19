@@ -1,3 +1,4 @@
+
 """将一个movie对象中的元数据写入对应的nfo文件"""
 
 import logging
@@ -57,6 +58,9 @@ def write_movie_nfo(movie: Movie, dir_path: str) -> bool:
     _add_id(movie, root)
 
     ET.SubElement(root, 'original_filename').text = movie.original_fname
+
+    if movie.scraper_source:
+        ET.SubElement(root, 'avdc_source').text = movie.scraper_source
 
     tree = ET.ElementTree(element=root)
     ET.indent(tree)

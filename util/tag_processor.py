@@ -8,6 +8,7 @@ from avdc.util.project_root import get_project_root
 from avdc.util.csv_utils import read_csv
 
 CSV_FNAME = 'data/tag_sc_map.csv'
+logger = logging.getLogger(__name__)
 
 tag_dict = {}
 ignore_tag = set()
@@ -30,7 +31,7 @@ def process_tags(tags: list[str]) -> list[str]:
 
 
 def _parse_sc_map():
-    logging.debug('试图载入标签文件。')
+    logger.debug('试图载入标签文件。')
     csv_path = os.path.join(get_project_root(), CSV_FNAME)
     for row in read_csv(csv_path):
         first, *rest = row
@@ -42,12 +43,12 @@ def _parse_sc_map():
             if first == '删除':
                 ignore_tag.add(tag)
             elif tag in tag_dict:
-                logging.warn(f'发现重复标签 {tag}')
+                logger.warn(f'发现重复标签 {tag}')
             else:
                 tag_dict[tag] = first
 
-    logging.debug(f'成功载入标签{tag_dict}')
-    logging.debug(f'成功载入忽略标签{ignore_tag}')
+    logger.debug(f'成功载入标签{tag_dict}')
+    logger.debug(f'成功载入忽略标签{ignore_tag}')
 
 
 def _translate_tag_to_sc(tag: str) -> str:
@@ -59,5 +60,5 @@ def _translate_tag_to_sc(tag: str) -> str:
     elif tag in tag_dict:
         return tag_dict[tag]
     else:
-        logging.warn(f'缺失标签 {tag}')
+        logger.warn(f'缺失标签 {tag}')
         return tag

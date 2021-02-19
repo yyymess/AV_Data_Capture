@@ -3,11 +3,11 @@
 暂行方案：
 - 使用github.com/xinxin8816/gfriends的json文件获取一对一参照
 - 使用1:1 map生成每个名字被映射次数的列表
-- 使用每个名称出现的频率来判断哪个名字为主要名，假设高频用名同时代表更多图像文件
+- 使用每个名称出现的频率来判断哪个名字为主要名，假设高频用名同时代表更多对应的图像文件
 - 输出csv，模式为
   主要名，别名，别名，别名。。。。
 
-这货实际上应该可以在使用时动态调用gfriends的数据库，不过本地化了能减少一个point of failure.
+这货实际上可以在使用时动态调用gfriends的数据库，不过本地化CSV能减少一个point of failure.
 """
 
 import csv
@@ -30,7 +30,7 @@ def gen_file() -> None:
                                    'actor_dupe_map.csv')
     with open(output_filepath, 'wt', newline='', encoding='utf-8') as csvfile:
         writer = csv.writer(csvfile)
-        csvfile.write('# 女优名, 别名…………')
+        csvfile.write('# 女优名, 别名, 别名, …………')
         # 用csv来换行保证换行符一致性。
         writer.writerow([])
         writer.writerows(dupe_list)
@@ -44,6 +44,9 @@ def reduce_gfriends_map() -> list[str]:
     gf_map = get_gfriends_map()
     name_to_counter: dict[str, Counter[str]] = defaultdict(hashableCounter)
 
+    # 用counter数每个名字被映射的次数
+    # 每次出现映射关系的时候合并两边的counter计数
+    # 得到的结果就是每个counter内包含同一个女优的不同别名
     for source, target in gf_map:
         target_counter = name_to_counter[target]
         target_counter[target] += 1
@@ -64,6 +67,8 @@ def reduce_gfriends_map() -> list[str]:
             # 没有重名的女优，可以无视了
             continue
         result_list.append(actors)
+
+    # 按名字排序下，稳定git更新
     result_list.sort()
     return result_list
 
@@ -97,7 +102,7 @@ def get_gfriends_map() -> Iterable[tuple[str, str]]:
         for second in second_lvls:
             for k, v in map_json[first][second].items():
                 # 处理据库内个别错误信息
-                if '???' not in k+v:
+                if '???' not in k + v:
                     output[os.path.splitext(k)[0]] = os.path.splitext(v)[0]
     print('√ 连接 Gfriends 女友头像仓库成功')
     return output.items()

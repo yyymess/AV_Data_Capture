@@ -1,10 +1,11 @@
 """统一csv读取逻辑。"""
 
-from typing import Iterator
 import csv
+from typing import Iterator
+
 
 def read_csv(filepath) -> Iterator[list[str]]:
-    with open(filepath, 'r', encoding = 'utf-8', newline = '') as f:
+    with open(filepath, 'r', encoding='utf-8', newline='') as f:
         csv_reader = csv.reader(f)
         for row in csv_reader:
             if not row:

@@ -31,6 +31,8 @@ from avdc.WebCrawler import javlib
 from avdc.WebCrawler import dlsite
 from avdc.WebCrawler import metajavlib
 
+logger = logging.getLogger(__name__)
+
 
 def escape_path(path, escape_literals: str):  # Remove escape literals
     backslash = '\\'
@@ -86,13 +88,12 @@ def get_data_from_json(file_number: str, filepath: str) -> Movie:  # 从JSON返�
         # if conf.debug() == True:
         #     print('[+]select avsox')
         sources.insert(0, sources.pop(sources.index("avsox")))
-    elif "mgstage" in sources and (re.match(r"\d+\D+", file_number) or "siro"
-                                   in file_number or "SIRO" in file_number
-                                   or "Siro" in file_number):
+    elif "mgstage" in sources and (re.match(r"\d+\D+", file_number) or
+                                   "SIRO" in file_number.upper()):
         # if conf.debug() == True:
         # print('[+]select fanza')
         sources.insert(0, sources.pop(sources.index("mgstage")))
-    elif "fc2" in sources and ("fc2" in file_number or "FC2" in file_number):
+    elif "fc2" in sources and ("FC2" in file_number.upper()):
         # if conf.debug() == True:
         #     print('[+]select fc2')
         sources.insert(0, sources.pop(sources.index("fc2")))
@@ -184,7 +185,7 @@ def get_data_from_json(file_number: str, filepath: str) -> Movie:  # 从JSON返�
                 json_data[translate_value] = translate(json_data[translate_value])
     """
 
-    logging.debug(movie)
+    logger.debug(movie)
     return movie
 
 
@@ -193,7 +194,7 @@ def small_cover_check(movie: Movie, path, cover_small, conf: Config, filepath,
     fname = movie.storage_fname + '-poster.jpg'
     download_file_with_filename(cover_small, fname, path, conf, filepath,
                                 failed_folder)
-    logging.debug(f'Image Downloaded! {path}/{fname}')
+    logger.debug(f'Image Downloaded! {path}/{fname}')
 
 
 # =====================资源下载部分===========================
@@ -305,7 +306,7 @@ def extrafanart_download(data, path, conf: Config, filepath, failed_folder):
                 break
         if os.path.getsize(path + '/extrafanart-' + str(j) + '.jpg') == 0:
             return
-        logging.debug(f'Image Downloaded! {path}/extrafanart-{j}.jpg')
+        logger.debug(f'Image Downloaded! {path}/extrafanart-{j}.jpg')
         j += 1
 
 
@@ -329,7 +330,7 @@ def image_download(movie: Movie, path, conf: Config, filepath, failed_folder):
             break
     if os.path.getsize(path + '/' + fanart_name) == 0:
         return
-    logging.debug(f'Image Downloaded! {path}/{fanart_name}')
+    logger.debug(f'Image Downloaded! {path}/{fanart_name}')
     shutil.copyfile(path + '/' + fanart_name, path + '/' + thumb_name)
 
 
