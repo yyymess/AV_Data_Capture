@@ -1,4 +1,3 @@
-
 """将一个movie对象中的元数据写入对应的nfo文件"""
 
 import logging
@@ -6,6 +5,8 @@ import os
 import xml.etree.ElementTree as ET
 
 from avdc.model.movie import Movie
+
+logger = logging.getLogger(__name__)
 
 
 def write_movie_nfo(movie: Movie, dir_path: str) -> bool:
@@ -67,10 +68,10 @@ def write_movie_nfo(movie: Movie, dir_path: str) -> bool:
     try:
         tree.write(file_path, encoding='utf-8', xml_declaration=True)
     except:
-        logging.error(f'写入nfo文件失败 {file_path}。')
+        logger.error(f'写入nfo文件失败 {file_path}。')
         return False
 
-    logging.info(f'成功写入nfo文件 {file_path}。')
+    logger.info(f'成功写入nfo文件 {file_path}。')
     return True
 
 
@@ -103,8 +104,8 @@ def _add_tags(movie: Movie, root: ET.Element) -> None:
     tags = set(movie.tags)
     raw_tags = set(movie.raw_tags)
 
-    logging.debug(f'原始标签 {raw_tags}')
-    logging.debug(f'输出标签 {tags}')
+    logger.debug(f'原始标签 {raw_tags}')
+    logger.debug(f'输出标签 {tags}')
 
     # 如果tag有变化的话把旧tag记录下来方便日后使用
     if set(raw_tags) - set(tags):
@@ -134,6 +135,12 @@ def _add_ratings(movie: Movie, root: ET.Element) -> None:
         return
     ratings = ET.SubElement(root, 'ratings')
     for i, rt in enumerate(movie.ratings):
+        # emby 和 jellyfin还没支持第二种rating标准
+        # 先把rating写进user rating里。
+        if i == 0:
+            user_rating = rt.rating / rt.max_rating * 10
+            ET.SubElement(root, 'rating').text = f'{user_rating:0.1f}'
+
         rating = ET.SubElement(ratings, 'rating')
         if rt.max_rating:
             rating.set('max', f'{rt.max_rating:0.0f}')

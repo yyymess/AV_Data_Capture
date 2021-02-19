@@ -47,8 +47,8 @@ def _parse_sc_map():
             else:
                 tag_dict[tag] = first
 
-    logger.debug(f'成功载入标签{tag_dict}')
-    logger.debug(f'成功载入忽略标签{ignore_tag}')
+    logger.debug(f'成功载入{len(tag_dict)}个标签映射。')
+    logger.debug(f'成功载入{len(ignore_tag)}个忽略标签。')
 
 
 def _translate_tag_to_sc(tag: str) -> str:
@@ -60,5 +60,5 @@ def _translate_tag_to_sc(tag: str) -> str:
     elif tag in tag_dict:
         return tag_dict[tag]
     else:
-        logger.warn(f'缺失标签 {tag}')
+        logger.debug(f'未登记标签 {tag}')
         return tag

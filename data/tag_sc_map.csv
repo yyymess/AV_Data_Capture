@@ -46,7 +46,7 @@ NTR,寝取り、寝取られ,寝取り・寝取られ,Cuckold
 辱骂,罵倒,辱罵,Insult
 韩国,韓国,韓國,Korean
 腿控,恋腿癖,脚フェチ,戀腿癖,Leg Fetish
-百合,レズキス,レズ,女同性恋,女同性戀,Lesbian,女同接吻,Lesbian Kiss
+百合,レズキス,レズ,女同性恋,女同性戀,Lesbian,女同接吻,Lesbian Kiss,女同志
 痴汉,痴漢,性骚扰,性騷擾,Molester
 淫乱、真实,淫乱、ハード系,淫亂、真實,"Nasty, Hardcore",淫乱・ハード系
 其他恋物癖,その他フェチ,其他戀物癖,Other Fetish
@@ -83,7 +83,7 @@ cosplay,角色扮演者,コスプレイヤー,动画人物,アニメキャラク
 老板娘、女主人,女将、女主人,老闆娘、女主人,"Landlady, Hostess",女将・女主人
 明星脸,そっくりさん,明星臉,Look-alike
 人妻,已婚妇女,已婚婦女,Married Woman
-大小姐,お嬢様,大 小姐,Miss
+大小姐,お嬢様,大 小姐,Miss,お嬢様・令嬢
 模特,モデル,模特儿,模特兒,Model
 母亲,お母さん,母親,Mother
 后母,義母,後母,Stepmother
@@ -92,7 +92,7 @@ cosplay,角色扮演者,コスプレイヤー,动画人物,アニメキャラク
 亚洲女优,アジア女優,亚洲女演员,亞洲女演員,Other Asian,アジア,亚洲,亞洲,Asian
 其他学生,その他学生,其他學生,Other Students
 公主,お姫様,Princess
-风俗女,妓女,風俗嬢,Prostitutes
+风俗女,妓女,風俗嬢,Prostitutes,キャバ嬢・風俗嬢
 赛车女郎,レースクィーン,賽車女郎,Race Queen
 高中女生,女子校生,School Girls
 秘书,秘書,Secretary
@@ -115,7 +115,7 @@ cosplay,角色扮演者,コスプレイヤー,动画人物,アニメキャラク
 女忍者,くノ一,Female Ninja
 女战士,女戦士,女戰士,Female Warrior
 眼镜,めがね,眼鏡,Glasses
-和服、丧服,和服・喪服,和服、喪服,"Kimono, Mourning"
+和服、丧服,和服・喪服,和服、喪服,"Kimono, Mourning",和服・浴衣
 绝对领域,ニーソックス,及膝袜,及膝襪,Knee Socks
 紧身衣,レオタード,緊身衣,Leotard
 内衣,ランジェリー,內衣,Lingerie,パンチラ,Underwear
@@ -128,9 +128,8 @@ cosplay,角色扮演者,コスプレイヤー,动画人物,アニメキャラク
 OL
 连裤袜,パンスト,連褲襪,Pantyhose
 巫女
-水手服,セーラー服,Sailor Suit
 死库水,スクール水着,学校泳装,學校泳裝,School Swimsuit
-校服,学生服,School Uniform
+校服,学生服,School Uniform,水手服,セーラー服,Sailor Suit
 空姐,スチュワーデス,空中小姐,Stewardess
 泳装,水着,泳裝,Swimsuit
 制服,制服外套,ブレザー,Blazer,Uniform
@@ -139,7 +138,7 @@ OL
 巨大屁股,巨尻,Huge Butt
 萝莉塔,ロリ系,蘿莉塔,Lolita
 熟女,成熟的女人,Mature Woman
-瘦小身形,嬌小的,ミニ系,瘦小身型,Mini
+瘦小身形,嬌小的,ミニ系,Mini,瘦小身型,小柄
 肌肉,筋肉,Muscle
 孕妇,妊婦,孕婦,Pregnant Woman
 晒黑,日焼け,曬黑,Sun tan
@@ -168,8 +167,8 @@ OL
 淋浴,シャワー,Shower
 乳交,パイズリ,Titty Fuck
 放尿,Urination
-凌辱,Abuse,辱め
-捆绑,ボンテージ,縛り,紧缚,緊縛,Bondage,綑綁,Restraints
+凌辱,Abuse,辱め,拷问,拷問
+捆绑,ボンテージ,縛り,紧缚,緊縛,Bondage,綑綁,Restraints,縛り・緊縛
 车震,カーセックス,汽车性爱,汽車性愛,Car Sex
 滴蜡,蝋燭,蜡烛,蠟燭,Candle
 子宫颈,ポルチオ,子宮頸,Cervix
@@ -194,7 +193,8 @@ SM
 精选、合集,合輯、精選,ベスト、総集編,ベスト・総集編,综合短篇,精选、综合,精選、綜合,"Best, Omnibus",綜合短篇,オムニバス,Omnibus
 纪录片,ドキュメント,紀錄片,Documentary,ドキュメンタリー
 女性向,女性向け,给女性观众,給女性觀眾,For Women
-特摄,アクション格闘,行动,特效,行動,アクション,Action,战斗行动,戰鬥行動,Fighting Action,特撮,Special Effects
+特摄,行动,特效,行動,Action,特撮,Special Effects
+格斗,アクション・格闘,战斗行动,戰鬥行動,Fighting Action,アクション格闘,アクション
 VR
 男同,ゲイ,男同性恋,男同性戀,Gay
 单体作品,單體作品,単体作品,Solowork
@@ -202,8 +202,7 @@ VR
 流出
 中文字幕
 魔鬼系
-瘦小身型
-巨大阴茎
+巨大阴茎,デカチン・巨根
 DP
 呕吐
 M女
@@ -259,7 +258,7 @@ R-15
 删除,電マ,振动,バイブ,女优按摩棒,女優按摩棒,Electric Massager,按摩棒,Vibe
 删除,60fps,1080p,蓝光,HD DVD,MicroSD,UMD,VHS,藍光,Blu-ray（ブルーレイ）,Blu-ray,microSD,ハイビジョン
 删除,エロス,性爱,性愛,Eros
-删除,DMM獨家,配信専用,独占配信
+删除,DMM獨家,配信専用,独占配信,AV女優片
 删除,高畫質,薄马赛克,数位马赛克,數位馬賽克,デジモ,Digital Mosaic,薄馬賽克,ギリモザ,Risky Mosaic
 删除,性爱,正常,全裸,去背影片,文化,男性,R-15,R-18,感官作品,ノーマル,Normal,Nude,クロマキー,Chroma Key,カルチャー,Culture,Male,官能作品,Sensuality,假阳具,黑发
 删除,帽型,形象俱乐部,主题工作,身体意识,成人电影,模拟,悬疑,触摸打字,形象俱樂部,イメクラ,Image Club,主題工作,話題作,Topic Work,身體意識,ボディコン,Body Conscious,ハットタイプ,Hat Type,成人電影,成人向け映画,Adult Movie,模擬,シミュレーション,Simulation,懸疑,サスペンス,Suspense,觸摸打字,タッチタイピング,Touch Typing

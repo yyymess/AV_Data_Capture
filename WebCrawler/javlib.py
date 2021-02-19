@@ -1,16 +1,15 @@
 import json
-from platform import release
-import time
-import bs4
-import re
 import logging
-
-from bs4 import BeautifulSoup
-from lxml import html
+import time
 from http.cookies import SimpleCookie
 
+import bs4
+from avdc.ADC_function import get_html, get_javlib_cookie
 from avdc.model.movie import Movie
-from avdc.ADC_function import get_javlib_cookie, get_html
+from bs4 import BeautifulSoup
+from lxml import html
+
+logger = logging.getLogger(__name__)
 
 
 def main(number: str) -> Movie:
@@ -18,7 +17,11 @@ def main(number: str) -> Movie:
 
     # Blank cookies mean javlib site return error
     if not raw_cookies:
-        return json.dumps({}, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ':'))
+        return json.dumps({},
+                          ensure_ascii=False,
+                          sort_keys=True,
+                          indent=4,
+                          separators=(',', ':'))
 
     # Manually construct a dictionary
     s_cookie = SimpleCookie()
@@ -29,30 +32,29 @@ def main(number: str) -> Movie:
 
     # Scraping
     result = get_html(
-        "http://www.javlibrary.com/cn/vl_searchbyid.php?keyword={}".format(number),
+        "http://www.javlibrary.com/cn/vl_searchbyid.php?keyword={}".format(
+            number),
         cookies=cookies,
         ua=user_agent,
-        return_type="object"
-    )
+        return_type="object")
     soup = BeautifulSoup(result.text, "html.parser")
     lx = html.fromstring(str(soup))
-    
+
     if "/?v=jav" in result.url:
         return extract_movie(lx, soup, result.url)
     else:
         url = _find_best_movie_match(lx, number)
         if url:
-            result = get_html(
-                url,
-                cookies=cookies,
-                ua=user_agent,
-                return_type="object"
-            )
+            result = get_html(url,
+                              cookies=cookies,
+                              ua=user_agent,
+                              return_type="object")
             soup = BeautifulSoup(result.text, "html.parser")
             lx = html.fromstring(str(soup))
             return extract_movie(lx, soup, result.url)
 
     return Movie()
+
 
 def _find_best_movie_match(lx: html.HtmlElement, number: str) -> str:
     number = number.upper()
@@ -62,17 +64,18 @@ def _find_best_movie_match(lx: html.HtmlElement, number: str) -> str:
     vid_list = []
     for v in vids:
         title = ''.join(v.xpath('.//div[@class="title"]/text()')).strip()
-        movie_id = ''.join(v.xpath('.//div[@class="id"]/text()')).strip().upper()
+        movie_id = ''.join(
+            v.xpath('.//div[@class="id"]/text()')).strip().upper()
         href = ''.join(v.xpath('./a/@href')).strip()[2:]
         url = 'http://www.javlibrary.com/cn/' + href
         vid_list.append((title, movie_id, url))
 
     # SNIS-459 有蓝光版，选非蓝光版
-    # ID-020 有同ID片
+    # ID-020 有多个同ID片
     matching_list = [i for i in vid_list if i[1] == number]
-    
+
     if len(matching_list) > 1:
-        logging.debug('ID搜索返回多个结果，试图清理蓝光版本。')
+        logger.debug('ID搜索返回多个结果，试图清理蓝光版本。')
         matching_list = [i for i in matching_list if 'ブルーレイ' not in i[0]]
 
     if not matching_list:
@@ -80,11 +83,13 @@ def _find_best_movie_match(lx: html.HtmlElement, number: str) -> str:
     elif len(matching_list) == 1:
         return matching_list[0][2]
     else:
-        logging.warning(f'多个影片出现重复ID。')
-        for i,v in enumerate(matching_list):
-            logging.warning(f'{i}: {v[0]}')
-            logging.warning(f'     {v[2]}')
-        logging.warning(f'{len(matching_list)}: 跳过')  
+        # TODO  这边的behaviour加个config flag来控制。
+        #       默认情况选第一个就好。
+        logger.warning(f'多个影片出现重复ID。')
+        for i, v in enumerate(matching_list):
+            logger.warning(f'{i}: {v[0]}')
+            logger.warning(f'     {v[2]}')
+        logger.warning(f'{len(matching_list)}: 跳过')
         index = len(matching_list) + 1
         while index > len(matching_list):
             try:
@@ -96,7 +101,9 @@ def _find_best_movie_match(lx: html.HtmlElement, number: str) -> str:
 
     return ''
 
-def extract_movie(lx: html.HtmlElement, soup: BeautifulSoup, url:str) -> Movie:
+
+def extract_movie(lx: html.HtmlElement, soup: BeautifulSoup,
+                  url: str) -> Movie:
     movie = Movie()
     movie.title = get_title(lx, soup)
     movie.studio = get_table_el_single_anchor(soup, "video_maker")
@@ -119,18 +126,18 @@ def extract_movie(lx: html.HtmlElement, soup: BeautifulSoup, url:str) -> Movie:
 
     return movie
 
+
 def _add_rating(movie: Movie, lx: html.HtmlElement) -> None:
     score = lx.xpath('//*[@id="video_review"]//span[@class="score"]/text()')
     if not score:
         return
     try:
         score = float(score[0].strip('( )'))
-        movie.add_rating(rating = score,
-                         source = 'javlib',
-                         max_rating = 10.0)
+        movie.add_rating(rating=score, source='javlib', max_rating=10.0)
     except:
+        logger.debug('评分刮削失败。')
         pass
-    
+
 
 def get_from_xpath(lx: html.HtmlElement, xpath: str) -> str:
     return lx.xpath(xpath)[0].strip()
@@ -175,7 +182,8 @@ def get_title(lx: html.HtmlElement, soup: BeautifulSoup) -> str:
 
 
 def get_cover(lx: html.HtmlComment) -> str:
-    return "http:{}".format(get_from_xpath(lx, '//*[@id="video_jacket_img"]/@src'))
+    return "http:{}".format(
+        get_from_xpath(lx, '//*[@id="video_jacket_img"]/@src'))
 
 
 if __name__ == "__main__":

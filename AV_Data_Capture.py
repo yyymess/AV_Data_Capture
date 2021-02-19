@@ -7,6 +7,7 @@ import shutil
 import sys
 import time
 from pathlib import Path
+from util.logging_config import config_logging
 
 from ADC_function import get_html
 from avdc.config import Config
@@ -160,6 +161,8 @@ def create_data_and_move_with_custom_number(file_path: str,
 
 if __name__ == '__main__':
     version = '4.4.1'
+
+    config_logging()
 
     # Parse command line args
     single_file_path, folder_path, config_file, custom_number, auto_exit = argparse_function(

@@ -101,7 +101,7 @@ def _set_rating(movie: Movie, htmlcode) -> None:
                          source = 'mgstage',
                          max_rating = 5.0)
     except:
-        logger.warn('获取评分失败。')
+        logger.warn('评分刮削失败。')
 
 def main(number2) -> Movie:
     number=number2.upper()

@@ -9,27 +9,11 @@ from lxml import etree  # need install
 
 logger = logging.getLogger(__name__)
 
-# import sys
-# import io
-# sys.stdout = io.TextIOWrapper(sys.stdout.buffer, errors = 'replace', line_buffering = True)
-
 
 def getTitle_fc2com(htmlcode):  #获取厂商
     html = etree.fromstring(htmlcode, etree.HTMLParser())
     result = html.xpath('/html/head/title/text()')[0]
     return result
-
-
-# FC2似乎没获取女优的办法。
-# def getActor_fc2com(htmlcode):
-#     try:
-#         html = etree.fromstring(htmlcode, etree.HTMLParser())
-#         result = html.xpath(
-#             '//*[@id="top"]/div[1]/section[1]/div/section/div[2]/ul/li[3]/a/text()'
-#         )[0]
-#         return result
-#     except:
-#         return ''
 
 
 def getStudio_fc2com(htmlcode):  #获取厂商
@@ -117,14 +101,16 @@ def getTrailer(htmlcode):
 
 def set_rating(movie: Movie, htmlcode) -> None:
     html = etree.fromstring(htmlcode, etree.HTMLParser())
-    rating_div = html.xpath('//a[@class="items_article_Stars"]')[0]
-    stars = rating_div.xpath('.//span')
-    rating = float(stars[0].attrib['class'][-1])
-    votes = int(stars[1].text)
-    movie.add_rating(
-        rating = rating, max_rating= 5.0, source = 'fc2', votes = votes)
+    try:
+        rating_div = html.xpath('//a[@class="items_article_Stars"]')[0]
+        stars = rating_div.xpath('.//span')
+        rating = float(stars[0].attrib['class'][-1])
+        votes = int(stars[1].text)
+        movie.add_rating(
+            rating = rating, max_rating= 5.0, source = 'fc2', votes = votes)
+    except:
+        logger.debug('评分刮削失败')
 
-    pass
 
 
 def main(number):
@@ -149,7 +135,8 @@ def main(number):
         movie.scraper_source = 'fc2'
         set_rating(movie, htmlcode)
     except Exception as e:
-        logger.error('fc2刮削失败。', exc_info = True)
+        logger.error('fc2刮削失败。')
+        logger.debug('', exc_info = True)
         movie = Movie()
     return movie
 

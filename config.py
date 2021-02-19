@@ -3,8 +3,8 @@ from __future__ import annotations  # Type hint for singleton
 import os
 import configparser
 import logging
-import coloredlogs
 from pathlib import Path
+from avdc.util.logging_config import config_logging
 
 logger = logging.getLogger(__name__)
 
@@ -32,80 +32,74 @@ class Config:
                 parser = configparser.ConfigParser()
                 try:
                     parser.read(p, encoding="utf-8-sig")
-                    self.conf = parser
+                    self._conf = parser
                     break
                 except:
                     logger.error('配置文件{p}载入失败。')
 
-        if not self.conf:
+        if not self._conf:
             logger.error('载入配置文件失败，使用默认配置。')
-            self.conf = self._default_config()
+            self._conf = self._default_config()
 
         # TODO adding this here for now.
         self.folder_path = os.path.abspath(".")
 
     @staticmethod
     def get_instance(path: str = 'config.ini') -> Config:
-        avdc_logger = logging.getLogger('avdc')
-        coloredlogs.install(level='INFO', logger=avdc_logger,
-                            fmt = '%(name)s[%(process)d] %(levelname)s %(message)s')
-
         if Config._instance is None:
-            Config(path)
+            Config._instance = Config(path)
             if Config._instance.debug():
-                coloredlogs.install(level='DEBUG', logger=avdc_logger,
-                            fmt = '%(name)s[%(process)d] %(levelname)s %(message)s')
-                print('Logger设定为DEBUG模式。')
+                config_logging('DEBUG')
                 logger.debug('Logger设定为DEBUG模式。')
 
             logger.debug(f'读取config文件 {path}')
         return Config._instance
 
-    def main_mode(self) -> str:
+    def main_mode(self) -> int:
         try:
-            return self.conf.getint("common", "main_mode")
+            return self._conf.getint("common", "main_mode")
         except ValueError:
             self._exit("common:main_mode")
 
     def failed_folder(self) -> str:
-        return self.conf.get("common", "failed_output_folder")
+        return self._conf.get("common", "failed_output_folder")
 
     def success_folder(self) -> str:
-        return self.conf.get("common", "success_output_folder")
+        return self._conf.get("common", "success_output_folder")
 
     def soft_link(self) -> bool:
-        return self.conf.getboolean("common", "soft_link")
+        return self._conf.getboolean("common", "soft_link")
     def failed_move(self) -> bool:
-        return self.conf.getboolean("common", "failed_move")
+        return self._conf.getboolean("common", "failed_move")
     def auto_exit(self) -> bool:
-        return self.conf.getboolean("common", "auto_exit")
+        return self._conf.getboolean("common", "auto_exit")
     def transalte_to_sc(self) -> bool:
-        return self.conf.getboolean("common", "transalte_to_sc")
+        return self._conf.getboolean("common", "transalte_to_sc")
     def is_transalte(self) -> bool:
-        return self.conf.getboolean("transalte", "switch")
+        return self._conf.getboolean("transalte", "switch")
 
     def translate_to_sc(self) -> bool:
-        return self.conf.getboolean("common", "transalte_to_sc")
+        return self._conf.getboolean("common", "transalte_to_sc")
     def is_translate(self) -> bool:
-        return self.conf.getboolean("transalte", "switch")
+        return self._conf.getboolean("transalte", "switch")
 
 
     def is_trailer(self) -> bool:
-        return self.conf.getboolean("trailer", "switch")
+        return self._conf.getboolean("trailer", "switch")
 
     def is_watermark(self) -> bool:
-        return self.conf.getboolean("watermark", "switch")
+        return self._conf.getboolean("watermark", "switch")
 
     def is_extrafanart(self) -> bool:
-        return self.conf.getboolean("extrafanart", "switch")   
+        return self._conf.getboolean("extrafanart", "switch")
     
     def watermark_type(self) -> int:
-        return int(self.conf.get("watermark", "water"))
+        return int(self._conf.get("watermark", "water"))
 
     def get_uncensored(self):
         try:
             sec = "uncensored"
-            uncensored_prefix = self.conf.get(sec, "uncensored_prefix")
+            uncensored_prefix = self._conf.get(sec, "uncensored_prefix")
             # uncensored_poster = self.conf.get(sec, "uncensored_poster")
             return uncensored_prefix
 
@@ -114,75 +108,75 @@ class Config:
 
     def get_extrafanart(self):
         try:
-            extrafanart_download = self.conf.get("extrafanart", "extrafanart_folder")
+            extrafanart_download = self._conf.get("extrafanart", "extrafanart_folder")
             return extrafanart_download
         except ValueError:
             self._exit("extrafanart_folder")
     def get_transalte_engine(self) -> str:
-        return self.conf.get("transalte","engine")
+        return self._conf.get("transalte","engine")
     # def get_transalte_appId(self) ->str:
     #     return self.conf.get("transalte","appid")
     def get_transalte_key(self) -> str:
-        return self.conf.get("transalte","key")
+        return self._conf.get("transalte","key")
     def get_transalte_delay(self) -> int:
-        return self.conf.getint("transalte","delay")
+        return self._conf.getint("transalte","delay")
     def transalte_values(self) -> str:
-        return self.conf.get("transalte", "values")
+        return self._conf.get("transalte", "values")
     def proxy(self) -> [str, int, int, str]:
         try:
             sec = "proxy"
-            switch = self.conf.get(sec, "switch")
-            proxy = self.conf.get(sec, "proxy")
-            timeout = self.conf.getint(sec, "timeout")
-            retry = self.conf.getint(sec, "retry")
-            proxytype = self.conf.get(sec, "type")
+            switch = self._conf.get(sec, "switch")
+            proxy = self._conf.get(sec, "proxy")
+            timeout = self._conf.getint(sec, "timeout")
+            retry = self._conf.getint(sec, "retry")
+            proxytype = self._conf.get(sec, "type")
             return switch, proxy, timeout, retry, proxytype
         except ValueError:
             self._exit("common")
 
     def cacert_file(self) -> str:
-        return self.conf.get('proxy', 'cacert_file')
+        return self._conf.get('proxy', 'cacert_file')
             
     def media_type(self) -> str:
-        return self.conf.get('media', 'media_type')
+        return self._conf.get('media', 'media_type')
 
     def sub_rule(self):
-        return self.conf.get('media', 'sub_type').split(',')
+        return self._conf.get('media', 'sub_type').split(',')
             
     def nfo_title_rule(self) -> str:
-        return self.conf.get("Name_Rule", "nfo_title_rule")
+        return self._conf.get("Name_Rule", "nfo_title_rule")
 
     def location_rule(self) -> str:
-        return self.conf.get("Name_Rule", "location_rule")
+        return self._conf.get("Name_Rule", "location_rule")
 
     def filename_rule(self) -> str:
-        return self.conf.get(
+        return self._conf.get(
             "Name_Rule", "filename_rule", fallback="number+' '+title")
     
     def max_title_len(self) -> int:
         """
         Maximum title length
         """
-        return self.conf.getint("Name_Rule", "max_title_len", fallback=50)
+        return self._conf.getint("Name_Rule", "max_title_len", fallback=50)
 
 
     def update_check(self) -> bool:
         try:
-            return self.conf.getboolean("update", "update_check")
+            return self._conf.getboolean("update", "update_check")
         except ValueError:
             self._exit("update:update_check")
 
     def sources(self) -> str:
-        return self.conf.get("priority", "website")
+        return self._conf.get("priority", "website")
 
     def escape_literals(self) -> str:
-        return self.conf.get("escape", "literals")
+        return self._conf.get("escape", "literals")
 
     def escape_folder(self) -> str:
-        return self.conf.get("escape", "folders")
+        return self._conf.get("escape", "folders")
 
     def debug(self) -> bool:
-        return self.conf.getboolean("debug_mode", "switch", fallback=False)
+        return self._conf.getboolean("debug_mode", "switch", fallback=False)
 
     @staticmethod
     def _exit(sec: str) -> None:
