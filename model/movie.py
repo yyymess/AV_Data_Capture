@@ -5,18 +5,18 @@ import re
 
 from avdc.config import Config
 from avdc.model.rating import Rating
+from avdc.util.actor_processor import process_actors
 from avdc.util.studio_processor import process_studio
 from avdc.util.tag_processor import process_tags
 from avdc.util.title_processor import process_title
-from avdc.util.actor_processor import process_actors
 
 
 class Movie:
-    '''
+    """
     用于存储单个影片的各类元数据。
     在写入nfo文件时会根据config决定是否使用各类标签的预处理器。
     如使用预处理器，在nfo文件中同时写入原数据。
-    '''
+    """
     def __init__(self):
         self._title: str = ''
 
@@ -24,24 +24,21 @@ class Movie:
 
         self._release: str = ''
 
-        self._year: str = ''
+        self.year: str = ''
 
         self._cover_small: str = ''
 
         self._tags: list[str] = []
 
-        # 减少更新tag频率，因为下面的eval，debug log太多了
-        self._tag_cache: list[str] = []
-
         self._studio: str = ''
 
-        self._director: str = ''
+        self.director: str = ''
 
-        self._movie_id: str = ''
+        self.movie_id: str = ''
 
-        self._cover: str = ''
+        self.cover: str = ''
 
-        self._outline: str = ''
+        self.outline: str = ''
 
         self.runtime: str = ''
 
@@ -49,21 +46,21 @@ class Movie:
 
         self.scraper_source: str = ''
 
-        self._label: str = ''
+        self.label: str = ''
 
-        self._trailer: str = ''
+        self.trailer: str = ''
 
         self.website: str = ''
 
-        self._imagecut: int = 0
+        self.imagecut: int = 0
 
-        self._extra_fanart: list[str] = []
+        self.extra_fanart: list[str] = []
 
         self.original_path = ''
 
         self._ratings: list[Rating] = []
 
-        self._fname_postfix = ''
+        self.fname_postfix = ''
 
         self._conf: Config = Config.get_instance()
 
@@ -95,7 +92,7 @@ ratings:          {self.ratings}
 website:          {self.website}
 imagecut:         {self.imagecut}
 extra_fanart:     {self.extra_fanart}
-trailer:     {self.trailer}
+trailer:          {self.trailer}
 storage_dir:      {self.storage_dir}
 storage_fname:    {self.storage_fname}
 original_path:    {self.original_path}
@@ -109,7 +106,7 @@ original_fname:   {self.original_fname}
 
     @title.setter
     def title(self, value: str) -> None:
-        if value:
+        if isinstance(value, str):
             self._title = value
 
     @property
@@ -123,7 +120,9 @@ original_fname:   {self.original_fname}
 
     @actors.setter
     def actors(self, value: list[str]) -> None:
-        if value:
+        if not isinstance(value, list):
+            return
+        if len(value) == 0 or isinstance(value[0], str):
             value = [i.strip() for i in value]
             value = [i for i in value if i]
             self._actors = value
@@ -145,7 +144,7 @@ original_fname:   {self.original_fname}
 
     @cover_small.setter
     def cover_small(self, value: str) -> None:
-        if value:
+        if isinstance(value, str):
             tmp_arr = value.split(',')
             if len(tmp_arr) > 0:
                 self._cover_small = tmp_arr[0].strip('\"').strip('\'')
@@ -154,13 +153,16 @@ original_fname:   {self.original_fname}
 
     @property
     def tags(self) -> list[str]:
-        return self._tag_cache
+        return process_tags(self._tags)
 
     @tags.setter
     def tags(self, value: list[str]) -> None:
-        if value:
+        if not isinstance(value, list):
+            return
+        if len(value) == 0 or isinstance(value[0], str):
+            value = [i.strip() for i in value]
+            value = [i for i in value if i]
             self._tags = value
-            self._tag_cache = process_tags(self._tags)
 
     def add_tag(self, val: str) -> None:
         """往标签池内添加新标签。"""
@@ -172,7 +174,6 @@ original_fname:   {self.original_fname}
             self._tags.remove('无码')
 
         self._tags.append(val)
-        self._tag_cache = process_tags(self._tags)
 
     @property
     def raw_tags(self) -> list[str]:
@@ -180,23 +181,14 @@ original_fname:   {self.original_fname}
 
     @property
     def release(self) -> str:
-        return (self._release)
+        return self._release
 
     @release.setter
     def release(self, value: str) -> None:
-        if value:
+        if isinstance(value, str):
             self._release = value
             if re.match(r'\d{4}-\d\d?-\d\d?', self._release):
-                self._year = value[:4]
-
-    @property
-    def year(self) -> str:
-        return (self._year)
-
-    @year.setter
-    def year(self, value: str) -> None:
-        if value:
-            self._year = value
+                self.year = value[:4]
 
     @property
     def studio(self) -> str:
@@ -204,87 +196,12 @@ original_fname:   {self.original_fname}
 
     @studio.setter
     def studio(self, value: str) -> None:
-        if value:
+        if isinstance(value, str):
             self._studio = value
 
     @property
     def raw_studio(self) -> str:
         return self._studio
-
-    @property
-    def director(self) -> str:
-        return self._director
-
-    @director.setter
-    def director(self, value: str) -> None:
-        if value:
-            self._director = value
-
-    @property
-    def movie_id(self) -> str:
-        return self._movie_id
-
-    @movie_id.setter
-    def movie_id(self, value: str) -> None:
-        if value:
-            self._movie_id = value
-
-    @property
-    def cover(self) -> str:
-        return self._cover
-
-    @cover.setter
-    def cover(self, value: str) -> None:
-        if value:
-            self._cover = value
-
-    @property
-    def outline(self) -> str:
-        return self._outline
-
-    @outline.setter
-    def outline(self, value: str) -> None:
-        if value:
-            self._outline = value
-
-    @property
-    def label(self) -> str:
-        return self._label
-
-    @label.setter
-    def label(self, value: str) -> None:
-        if value:
-            self._label = value
-
-    @property
-    def trailer(self) -> str:
-        if self._conf.is_trailer():
-            return self._trailer
-        else:
-            return ''
-
-    @trailer.setter
-    def trailer(self, value: str) -> None:
-        if value:
-            self._trailer = value
-
-    @property
-    def imagecut(self) -> int:
-        return self._imagecut
-
-    @imagecut.setter
-    def imagecut(self, value: int) -> None:
-        if value:
-            self._imagecut = value
-
-    @property
-    def extra_fanart(self) -> list[str]:
-        return self._extra_fanart
-
-    @extra_fanart.setter
-    def extra_fanart(self, value: list[str]) -> None:
-        if value:
-            self._extra_fanart = value
 
     def _eval_name(self, tmpl: str, use_short_title=True) -> str:
         title = self.short_title if use_short_title else self.title
@@ -311,17 +228,7 @@ original_fname:   {self.original_fname}
 
     @property
     def storage_fname(self) -> str:
-        return self._eval_name(
-            self._conf.filename_rule()) + self._fname_postfix
-
-    @property
-    def fname_postfix(self) -> str:
-        return self._fname_postfix
-
-    @fname_postfix.setter
-    def fname_postfix(self, val: str) -> None:
-        if val:
-            self._fname_postfix = val
+        return self._eval_name(self._conf.filename_rule()) + self.fname_postfix
 
     @property
     def nfo_title(self) -> str:
