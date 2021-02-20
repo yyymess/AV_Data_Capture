@@ -7,7 +7,8 @@ import shutil
 import sys
 import time
 from pathlib import Path
-from util.logging_config import config_logging
+from avdc.util.tag_processor import debug_unknown_tags
+from avdc.util.logging_config import config_logging
 
 from ADC_function import get_html
 from avdc.config import Config
@@ -211,10 +212,11 @@ if __name__ == '__main__':
             print('[!] - ' + percentage + ' [' + str(count) + '/' + count_all +
                   '] -')
             create_data_and_move(movie_path, conf, conf.debug())
-            # 休息3秒，防封
-            time.sleep(3)
+            # 休息几秒，防封
+            time.sleep(conf.sleep_between_movie())
 
     rm_empty_success_failed_folder(conf)
+    debug_unknown_tags()
     print("[+]All finished!!!")
     if not (conf.auto_exit() or auto_exit):
         input(

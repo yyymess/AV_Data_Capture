@@ -31,7 +31,7 @@ from avdc.WebCrawler import javlib
 from avdc.WebCrawler import dlsite
 from avdc.WebCrawler import metajavlib
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('avdc.core')
 
 
 def escape_path(path, escape_literals: str):  # Remove escape literals
@@ -541,7 +541,7 @@ def core_main(file_path, number_th, conf: Config):
     movie.fname_postfix = c_word + part
 
     # 判断是否无码
-    if is_uncensored(movie.movie_id):
+    if '无码' in filepath or is_uncensored(movie.movie_id):
         uncensored = 1
         movie.add_tag("无码")
     else:
@@ -570,7 +570,7 @@ def core_main(file_path, number_th, conf: Config):
         image_download(movie, path, conf, filepath, conf.failed_folder())
         try:
             # 下载预告片
-            if movie.trailer:
+            if movie.trailer and conf.is_trailer():
                 trailer_download(movie, path, filepath, conf,
                                  conf.failed_folder())
         except:

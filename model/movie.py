@@ -1,7 +1,9 @@
 """用于存储单个影片，并负责将其存入nfo文件。"""
+from __future__ import annotations
 
 import os
 import re
+from util.tag_processor import translate_tag_to_sc
 
 from avdc.config import Config
 from avdc.model.rating import Rating
@@ -240,6 +242,11 @@ original_fname:   {self.original_fname}
 
     @property
     def ratings(self) -> list[Rating]:
+        # 按照投票人数排序
+        # 如果没有人数的话保守按5人算
+        self._ratings.sort(
+            key = lambda rt: rt.votes or 5,
+            reverse = True)
         return self._ratings
 
     def add_rating(self,
@@ -254,6 +261,12 @@ original_fname:   {self.original_fname}
         if new_rating.is_valid():
             self._ratings.append(new_rating)
 
+    def add_ratings(self, ratings: list[Rating]):
+        existing = set(i.source for i in self._ratings)
+        for r in ratings:
+            if r.source not in existing:
+                self._ratings.append(r)
+
     def is_filled(self) -> bool:
         """
         Returns true if both title and movie id are filled in this object.
@@ -265,3 +278,28 @@ original_fname:   {self.original_fname}
             return False
 
         return True
+
+    def match_movie(self, other: Movie) -> bool:
+        """
+        检查两部影片是否是同一部。逻辑比较简陋。
+        """
+        if not self.is_filled():
+            return False
+        if not other.is_filled():
+            return False
+        if self.movie_id.upper() != other.movie_id.upper():
+            return False
+        return True
+
+    def merge_tags(self, other: Movie) -> None:
+        """
+        将第二部电影的标签加入本电影的标签池中。
+        标签会依靠标签翻译库进行简单去重。
+        返回本电影。
+        """
+        # 单独跑，避免受到config的翻译flag影响
+        existing_tag = set(process_tags(self._tags))
+        for t in other._tags:
+            if translate_tag_to_sc(t) not in existing_tag:
+                existing_tag.add(translate_tag_to_sc(t))
+                self._tags.append(t)

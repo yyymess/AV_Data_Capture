@@ -140,6 +140,9 @@ class Config:
     def media_type(self) -> str:
         return self._conf.get('media', 'media_type')
 
+    def sleep_between_movie(self) -> int:
+        return self._conf.getint("common","sleep_between_movie", fallback=3)
+
     def sub_rule(self):
         return self._conf.get('media', 'sub_type').split(',')
             

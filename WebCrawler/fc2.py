@@ -12,8 +12,11 @@ logger = logging.getLogger(__name__)
 
 def getTitle_fc2com(htmlcode):  #获取厂商
     html = etree.fromstring(htmlcode, etree.HTMLParser())
-    result = html.xpath('/html/head/title/text()')[0]
-    return result
+    result = html.xpath('//section[@class="items_article_header"]//div[@class="items_article_headerInfo"]//text()')
+    if result:
+        return result[0]
+    else:
+        return ''
 
 
 def getStudio_fc2com(htmlcode):  #获取厂商
@@ -142,4 +145,5 @@ def main(number):
 
 
 if __name__ == '__main__':
+    print(main('DGCESD-838'))
     print(main('FC2-1603395'))

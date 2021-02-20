@@ -32,7 +32,7 @@ def main(number: str) -> Movie:
 
     # Scraping
     result = get_html(
-        "http://www.javlibrary.com/cn/vl_searchbyid.php?keyword={}".format(
+        "http://www.b47w.com/cn/vl_searchbyid.php?keyword={}".format(
             number),
         cookies=cookies,
         ua=user_agent,
@@ -67,7 +67,7 @@ def _find_best_movie_match(lx: html.HtmlElement, number: str) -> str:
         movie_id = ''.join(
             v.xpath('.//div[@class="id"]/text()')).strip().upper()
         href = ''.join(v.xpath('./a/@href')).strip()[2:]
-        url = 'http://www.javlibrary.com/cn/' + href
+        url = 'http://www.b47w.com/cn/' + href
         vid_list.append((title, movie_id, url))
 
     # SNIS-459 有蓝光版，选非蓝光版

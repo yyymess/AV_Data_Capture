@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 tag_dict = {}
 ignore_tag = set()
 known_tag = set()
+unknown_tag = set()
 
 
 def process_tags(tags: list[str]) -> list[str]:
@@ -23,12 +24,11 @@ def process_tags(tags: list[str]) -> list[str]:
     tags = [i for i in tags if i]
 
     if translate_to_sc:
-        tags = [_translate_tag_to_sc(t) for t in tags]
+        tags = [translate_tag_to_sc(t) for t in tags]
         tags = [t for t in tags if t]
 
     output = list(set(tags))
     return output
-
 
 def _parse_sc_map():
     logger.debug('试图载入标签文件。')
@@ -50,8 +50,12 @@ def _parse_sc_map():
     logger.debug(f'成功载入{len(tag_dict)}个标签映射。')
     logger.debug(f'成功载入{len(ignore_tag)}个忽略标签。')
 
+def debug_unknown_tags():
+    for tag in unknown_tag:
+        logger.debug(f'未登记标签 {tag}')
 
-def _translate_tag_to_sc(tag: str) -> str:
+
+def translate_tag_to_sc(tag: str) -> str:
     if not tag_dict:
         _parse_sc_map()
 
@@ -60,5 +64,5 @@ def _translate_tag_to_sc(tag: str) -> str:
     elif tag in tag_dict:
         return tag_dict[tag]
     else:
-        logger.debug(f'未登记标签 {tag}')
+        unknown_tag.add(tag)
         return tag

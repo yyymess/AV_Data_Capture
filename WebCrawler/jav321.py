@@ -10,11 +10,14 @@ def main(number: str) -> Movie:
     result = post_html(url="https://www.jav321.com/search",
                        query={"sn": number})
 
-    soup = BeautifulSoup(result.text, "html.parser")
-    lx = html.fromstring(str(soup))
 
     movie = Movie()
 
+    if not result.text.strip():
+        return movie
+
+    soup = BeautifulSoup(result.text, "html.parser")
+    lx = html.fromstring(str(soup))
     if "/video/" in result.url:
         parse_info(soup, movie)
         movie.title = get_title(lx)
@@ -105,13 +108,17 @@ def get_cover(lx: html.HtmlElement) -> str:
 
 
 def get_outline(lx: html.HtmlElement) -> str:
-    return lx.xpath(
-        "/html/body/div[2]/div[1]/div[1]/div[2]/div[3]/div/text()")[0]
+    result = lx.xpath(
+        "/html/body/div[2]/div[1]/div[1]/div[2]/div[3]/div/text()")
+    result = result[0] if result else ''
+    return result
 
 
 def get_series2(lx: html.HtmlElement) -> str:
-    return lx.xpath(
-        "/html/body/div[2]/div[1]/div[1]/div[2]/div[1]/div[2]/a[11]/text()")[0]
+    result = lx.xpath(
+        "/html/body/div[2]/div[1]/div[1]/div[2]/div[1]/div[2]/a[11]/text()")
+    result = result[0] if result else ''
+    return result
 
 
 def get_actor(data: hash) -> list[str]:
@@ -171,5 +178,6 @@ def get_series(data: hash) -> str:
 
 
 if __name__ == "__main__":
-    print(main("xrw-565"))
-    print(main("jul-404"))
+    #print(main("xrw-565"))
+    #print(main("jul-404"))
+    print(main('dvdms-582'))
