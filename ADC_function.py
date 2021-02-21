@@ -7,7 +7,6 @@ import time
 from lxml import etree
 import re
 from avdc.config import Config
-import logging
 
 SUPPORT_PROXY_TYPE = ("http", "socks5", "socks5h")
 

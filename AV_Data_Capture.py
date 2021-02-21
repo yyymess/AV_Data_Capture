@@ -1,12 +1,12 @@
 import argparse
 import json
-import logging
 import os
 import re
 import shutil
 import sys
 import time
 from pathlib import Path
+from avdc.util.logging_config import get_logger
 from avdc.util.tag_processor import debug_unknown_tags
 from avdc.util.logging_config import config_logging
 
@@ -17,7 +17,7 @@ from avdc.number_parser import get_number
 from avdc.util.file_mgmt import (create_success_failed_folder, dir_picker,
                             rm_empty_success_failed_folder)
 
-logger = logging.getLogger('avdc')
+logger = get_logger('avdc.main')
 
 
 def check_update(local_version):
@@ -169,9 +169,9 @@ if __name__ == '__main__':
     single_file_path, folder_path, config_file, custom_number, auto_exit = argparse_function(
         version)
 
-    print('[*]================== AV Data Capture ===================')
-    print('[*]' + version.center(54))
-    print('[*]======================================================')
+    logger.info(' AV Data Capture '.center(54, '='))
+    logger.info(version.center(54))
+    logger.info(''.center(54, '='))
 
     # Read config.ini
     conf = Config.get_instance(path=config_file)
@@ -205,7 +205,7 @@ if __name__ == '__main__':
 
         count = 0
         count_all = str(len(movie_list))
-        print('[+]Find', count_all, 'movies')
+        logger.attn(f'Find {count_all} movies')
         for movie_path in movie_list:  # 遍历电影列表 交给core处理
             count = count + 1
             percentage = str(count / int(count_all) * 100)[:4] + '%'

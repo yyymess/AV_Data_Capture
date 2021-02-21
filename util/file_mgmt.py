@@ -1,15 +1,14 @@
 """各类文件创立、修改功能"""
 
-import logging
 import os
-import sys
 
 from tkinter import Tk, filedialog
 import os
+from avdc.util.logging_config import get_logger
 from avdc import config
 from avdc.model.movie import Movie
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 def dir_picker() -> str:
     """询问用户并返回一个文件夹"""

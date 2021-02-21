@@ -1,7 +1,7 @@
 import json
-import logging
 import time
 from http.cookies import SimpleCookie
+from avdc.util.logging_config import config_logging, get_logger
 
 import bs4
 from avdc.ADC_function import get_html, get_javlib_cookie
@@ -9,7 +9,7 @@ from avdc.model.movie import Movie
 from bs4 import BeautifulSoup
 from lxml import html
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def main(number: str) -> Movie:
@@ -187,6 +187,7 @@ def get_cover(lx: html.HtmlComment) -> str:
 
 
 if __name__ == "__main__":
+    config_logging('DEBUG', root=True)
     #lists = ["DVMC-003", "GS-0167", "JKREZ-001", "KMHRS-010", "KNSD-023", "ARM-072"]
     lists = ["DASD-802"]
     for num in lists:

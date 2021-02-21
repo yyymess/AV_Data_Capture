@@ -1,12 +1,12 @@
 """将一个movie对象中的元数据写入对应的nfo文件"""
 
-import logging
 import os
+from avdc.util.logging_config import get_logger
 import xml.etree.ElementTree as ET
 
 from avdc.model.movie import Movie
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def write_movie_nfo(movie: Movie, dir_path: str) -> bool:

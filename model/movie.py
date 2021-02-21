@@ -3,13 +3,12 @@ from __future__ import annotations
 
 import os
 import re
-from util.tag_processor import translate_tag_to_sc
 
 from avdc.config import Config
 from avdc.model.rating import Rating
 from avdc.util.actor_processor import process_actors
 from avdc.util.studio_processor import process_studio
-from avdc.util.tag_processor import process_tags
+from avdc.util.tag_processor import process_tags, translate_tag_to_sc
 from avdc.util.title_processor import process_title
 
 
@@ -244,9 +243,7 @@ original_fname:   {self.original_fname}
     def ratings(self) -> list[Rating]:
         # 按照投票人数排序
         # 如果没有人数的话保守按5人算
-        self._ratings.sort(
-            key = lambda rt: rt.votes or 5,
-            reverse = True)
+        self._ratings.sort(key=lambda rt: rt.votes or 5, reverse=True)
         return self._ratings
 
     def add_rating(self,

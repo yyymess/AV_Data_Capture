@@ -1,11 +1,12 @@
-import logging
 import re
+from avdc.util.logging_config import config_logging, get_logger
 from lxml import etree
 from bs4 import BeautifulSoup
 from avdc.ADC_function import *
 from avdc.model.movie import Movie
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
+
 def getTitle(a):
     try:
         html = etree.fromstring(a, etree.HTMLParser())
@@ -131,6 +132,7 @@ def main(number2) -> Movie:
     #print(htmlcode)
 
 if __name__ == '__main__':
+    config_logging('DEBUG', root=True)
     #020RVG-077 多个可点击演出者
     #200GANA-1283 两个不可点击演出者
     #488MCV-008 0评分

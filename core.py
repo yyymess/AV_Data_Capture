@@ -1,11 +1,11 @@
 import json
-import logging
 import os
 import pathlib
 import re
 import shutil
 import traceback
 from io import BytesIO
+from avdc.util.logging_config import get_logger
 
 import requests
 from PIL import Image
@@ -31,7 +31,7 @@ from avdc.WebCrawler import javlib
 from avdc.WebCrawler import dlsite
 from avdc.WebCrawler import metajavlib
 
-logger = logging.getLogger('avdc.core')
+logger = get_logger('avdc.core')
 
 
 def escape_path(path, escape_literals: str):  # Remove escape literals
@@ -108,7 +108,7 @@ def get_data_from_json(file_number: str, filepath: str) -> Movie:  # 从JSON返�
     for source in sources:
         try:
             if conf.debug():
-                print('[+]select', source)
+                logger.attn(f'select {source}')
             returnval = func_mapping[source](file_number)
             if (isinstance(returnval, Movie)):
                 if returnval.is_filled():

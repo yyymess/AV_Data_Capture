@@ -107,9 +107,10 @@ venv.bak/
 # movie files
 *.mp4
 
-# success/failed folder
+# program created
 JAV_output/**/*
 failed/*
+/config.ini
 
 # emacs
 \#*#

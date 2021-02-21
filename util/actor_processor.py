@@ -1,15 +1,15 @@
 """读取 actor_dupe_map.csv中的数据并提供女优映射。"""
 
-import logging
 import os
+from avdc.util.logging_config import get_logger
 
 from avdc.util.csv_utils import read_csv
 from avdc.util.project_root import get_project_root
 
-CSV_FNAME = 'data/actor_dupe_map.csv'
+CSV_FNAME = os.path.join('data', 'actor_dupe_map.csv')
 
 actor_map = {}
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def process_actors(actors: list[str]) -> list[str]:
@@ -18,8 +18,8 @@ def process_actors(actors: list[str]) -> list[str]:
 
 
 def _parse_actor_map():
-    logger.debug('试图载入女优查重文件。')
     csv_path = os.path.join(get_project_root(), CSV_FNAME)
+    logger.debug(f'试图载入女优查重文件：{csv_path}')
 
     for row in read_csv(csv_path):
         first, *rest = row

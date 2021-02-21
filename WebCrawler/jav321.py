@@ -1,5 +1,6 @@
 import re
 
+from avdc.util.logging_config import config_logging
 from avdc.ADC_function import post_html
 from avdc.model.movie import Movie
 from bs4 import BeautifulSoup
@@ -178,6 +179,7 @@ def get_series(data: hash) -> str:
 
 
 if __name__ == "__main__":
+    config_logging('DEBUG', root=True)
     #print(main("xrw-565"))
-    #print(main("jul-404"))
-    print(main('dvdms-582'))
+    print(main("jul-404"))
+    #print(main('dvdms-582'))

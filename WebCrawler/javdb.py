@@ -1,5 +1,5 @@
-import logging
 import re
+from avdc.util.logging_config import config_logging, get_logger
 from lxml import etree
 import json
 from avdc.ADC_function import *
@@ -8,7 +8,7 @@ from avdc.model.movie import Movie
 # import io
 # sys.stdout = io.TextIOWrapper(sys.stdout.buffer, errors = 'replace', line_buffering = True)
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 def getTitle(a):
     html = etree.fromstring(a, etree.HTMLParser())
@@ -294,7 +294,7 @@ def main(number):
 # main('DV-1562')
 # input("[+][+]Press enter key exit, you can check the error messge before you exit.\n[+][+]按回车键结束，你可以在结束之前查看和错误信息。")
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
+    config_logging('DEBUG', root=True)
     # print(main('blacked.20.05.30'))
     # print(main('AGAV-042'))
     # print(main('EIH-059'))

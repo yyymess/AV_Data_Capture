@@ -1,14 +1,13 @@
 """读取tag_sc_map.csv并提供将tag翻译成中文的功能"""
-import csv
-import logging
 import os
+from avdc.util.logging_config import get_logger
 
 from avdc.config import Config
 from avdc.util.project_root import get_project_root
 from avdc.util.csv_utils import read_csv
 
-CSV_FNAME = 'data/tag_sc_map.csv'
-logger = logging.getLogger(__name__)
+CSV_FNAME = os.path.join('data','tag_sc_map.csv')
+logger = get_logger(__name__)
 
 tag_dict = {}
 ignore_tag = set()

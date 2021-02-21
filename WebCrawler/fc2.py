@@ -1,13 +1,12 @@
-import json
-import logging
 import re
 import sys
+from avdc.util.logging_config import get_logger
 
 from avdc.ADC_function import get_html
 from avdc.model.movie import Movie
 from lxml import etree  # need install
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def getTitle_fc2com(htmlcode):  #获取厂商
