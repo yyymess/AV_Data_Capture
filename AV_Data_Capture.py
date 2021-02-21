@@ -10,11 +10,11 @@ from pathlib import Path
 from avdc.util.tag_processor import debug_unknown_tags
 from avdc.util.logging_config import config_logging
 
-from ADC_function import get_html
+from avdc.ADC_function import get_html
 from avdc.config import Config
-from core import core_main
-from number_parser import get_number
-from util.file_mgmt import (create_success_failed_folder, dir_picker,
+from avdc.core import core_main
+from avdc.number_parser import get_number
+from avdc.util.file_mgmt import (create_success_failed_folder, dir_picker,
                             rm_empty_success_failed_folder)
 
 logger = logging.getLogger('avdc')

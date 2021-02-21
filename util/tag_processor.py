@@ -31,8 +31,8 @@ def process_tags(tags: list[str]) -> list[str]:
     return output
 
 def _parse_sc_map():
-    logger.debug('试图载入标签文件。')
     csv_path = os.path.join(get_project_root(), CSV_FNAME)
+    logger.debug(f'试图载入标签文件: {csv_path}')
     for row in read_csv(csv_path):
         first, *rest = row
         if first != '删除':

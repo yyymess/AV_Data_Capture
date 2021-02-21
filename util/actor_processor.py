@@ -25,6 +25,7 @@ def _parse_actor_map():
         first, *rest = row
         for a in rest:
             actor_map[a] = first
+    logger.debug(f'成功载入{len(actor_map)}个女优映射。')
 
 
 def _process_actor(actor: str) -> str:

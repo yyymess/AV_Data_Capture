@@ -5,6 +5,8 @@ import configparser
 import logging
 from pathlib import Path
 from avdc.util.logging_config import config_logging
+from avdc.util.project_root import get_project_root, get_exe_path
+from shutil import copyfile
 
 logger = logging.getLogger(__name__)
 
@@ -20,12 +22,14 @@ class Config:
             Config._instance = self
 
         fname = os.path.basename(path)
+        default_fname = 'config.ini'
         config_paths = [
-            os.path.abspath('./' + path),
+            os.path.abspath(path),
             os.path.join(os.getcwd(), fname),
-            os.path.join(Path(__file__).parent, fname),
+            os.path.join(get_exe_path(), default_fname)
         ]
 
+        self._conf = None
         for p in config_paths:
             if os.path.exists(p):
                 logger.info(f'试图载入 {p}')
@@ -38,8 +42,18 @@ class Config:
                     logger.error('配置文件{p}载入失败。')
 
         if not self._conf:
-            logger.error('载入配置文件失败，使用默认配置。')
-            self._conf = self._default_config()
+            internal_path = os.path.join(
+                            get_project_root(), 'data', default_fname)
+            output_path = os.path.join(get_exe_path(), default_fname)
+            logger.error('未找到配置文件，本次运行将使用默认配置文件。')
+            try:
+                copyfile(internal_path, output_path)
+                logger.error(f'已经为您打印一份配置文件至{output_path}')
+                logger.error('请按照您的需求自行配置。')
+            except:
+                logger.error(f'尝试写入{output_path}失败')
+            self._conf = configparser.ConfigParser()
+            self._conf.read(internal_path, encoding='utf-8-sig')
 
         # TODO adding this here for now.
         self.folder_path = os.path.abspath(".")
@@ -258,12 +272,12 @@ class Config:
 
         sec12 = "watermark"
         conf.add_section(sec12)
-        conf.set(sec12, "switch", 1)
-        conf.set(sec12, "water", 2)
+        conf.set(sec12, "switch", "1")
+        conf.set(sec12, "water", "2")
 
         sec13 = "extrafanart"
         conf.add_section(sec13)
-        conf.set(sec13, "switch", 1)
+        conf.set(sec13, "switch", "1")
         conf.set(sec13, "extrafanart_folder", "extrafanart")
 
         return conf

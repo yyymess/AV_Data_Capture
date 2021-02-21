@@ -7,10 +7,10 @@ mkdir build
 mkdir __pycache__
 
 pyinstaller --onefile AV_Data_Capture.py `
-    --hidden-import ADC_function.py `
-    --hidden-import core.py `
-    --add-data "$CLOUDSCRAPER_PATH;cloudscraper"
-    --add-data "data/tag_sc_map.csv;data"
+    --add-data "$CLOUDSCRAPER_PATH;cloudscraper" `
+    --add-data "data/tag_sc_map.csv;data" `
+    --add-data "data/actor_dupe_map.csv;data" `
+    --add-data "data/config.ini;data"
 
 rmdir -Recurse -Force build
 rmdir -Recurse -Force __pycache__
