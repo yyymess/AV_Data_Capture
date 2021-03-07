@@ -71,7 +71,7 @@ class _DebugFormatter(_InfoFormatter):
     """
     def __init__(
             self,
-            fmt='%(name)s %(filename)s:%(lineno)s %(levelname)s %(message)s'):
+            fmt='%(filename)s:%(lineno)s %(levelname)s %(message)s'):
         super().__init__(fmt)
 
     def _format_msg(self, record, msg) -> str:
