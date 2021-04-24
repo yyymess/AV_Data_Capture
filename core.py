@@ -519,6 +519,7 @@ def get_part(filepath, failed_folder) -> str:
 def core_main(file_path, number_th, conf: Config):
     # =======================================================================初始化所需变量
     part = ''
+    leak_word = ''
     c_word = ''
     cn_sub = ''
 
@@ -538,7 +539,6 @@ def core_main(file_path, number_th, conf: Config):
         movie.add_tag('中文字幕')
     if '-CD' in filepath or '-cd' in filepath:
         part = get_part(filepath, conf.failed_folder())
-    movie.fname_postfix = c_word + part
 
     # 判断是否无码
     if '无码' in filepath or is_uncensored(movie.movie_id):
@@ -547,11 +547,14 @@ def core_main(file_path, number_th, conf: Config):
     else:
         uncensored = 0
 
-    if '流出' in filepath:
+    if '流出' in filepath or 'uncensored' in filepath:
         movie.add_tag("流出")
         leak = 1
+        leak_word = '-流出' # 流出影片后缀
     else:
         leak = 0
+
+    movie.fname_postfix = leak_word + c_word + part
 
     # main_mode
     #  1: 刮削模式 / Scraping mode
