@@ -450,6 +450,7 @@ def add_to_pic(pic_path, img_pic, size, count, mode):
 def paste_file_to_folder(movie: Movie, filepath, path,
                          conf: Config):  # 文件路径，番号，后缀，要移动至的位置
     houzhui = os.path.splitext(filepath)[1].replace(",", "")
+    file_parent_origin_path = str(pathlib.Path(filepath).parent)
     try:
         targetpath = os.path.join(path, movie.storage_fname + houzhui)
         # 如果soft_link=1 使用软链接
