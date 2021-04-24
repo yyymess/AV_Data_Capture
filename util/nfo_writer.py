@@ -30,6 +30,7 @@ def write_movie_nfo(movie: Movie, dir_path: str) -> bool:
 
     if movie.release:
         ET.SubElement(root, 'release').text = movie.release
+        ET.SubElement(root, 'premiered').text = movie.release
 
     _add_ratings(movie, root)
 
