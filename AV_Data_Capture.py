@@ -34,9 +34,8 @@ def check_update(local_version):
 
     remote = data["tag_name"].replace(".", "")
     local_version = local_version.replace(".", "")
-    if not local_version > remote:
-        print("[*]" +
-              ("* New update " + str(data["tag_name"]) + " *").center(54))
+    if local_version < remote:
+        print("[*]" + ("* New update " + str(data["tag_name"]) + " *").center(54))
         print("[*]" + "↓ Download ↓".center(54))
         print("[*]https://github.com/yoshiko2/AV_Data_Capture/releases")
         print("[*]======================================================")
