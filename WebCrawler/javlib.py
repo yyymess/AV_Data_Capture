@@ -143,6 +143,15 @@ def get_from_xpath(lx: html.HtmlElement, xpath: str) -> str:
     return lx.xpath(xpath)[0].strip()
 
 
+def get_outline(number):
+    try:
+        response = json.loads(airav.main(number))
+        result = response['outline']
+        return result
+    except:
+        return ''
+
+
 def get_table_el_single_anchor(soup: BeautifulSoup, tag_id: str) -> str:
     tag = soup.find(id=tag_id).find("a")
 
