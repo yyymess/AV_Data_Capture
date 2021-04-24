@@ -161,7 +161,7 @@ def create_data_and_move_with_custom_number(file_path: str,
 
 
 if __name__ == '__main__':
-    version = '4.4.1'
+    version = '4.4.2'
 
     config_logging()
 
