@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import os
 import pathlib
@@ -464,10 +466,11 @@ def paste_file_to_folder(movie: Movie, filepath, path,
             # 移走文件后，在原来位置增加一个可追溯的软链接，指向文件新位置
             # 以便追查文件从原先位置被移动到哪里了，避免因为得到错误番号后改名移动导致的文件失踪
             # 便于手工找回文件。并将软连接文件名后缀修改，以避免再次被搜刮。
-            targetabspath = os.path.abspath(targetpath)
-            if targetabspath != os.path.abspath(filepath):
-                targetrelpath = os.path.relpath(targetabspath, file_parent_origin_path)
-                os.symlink(targetrelpath, filepath + '#sym')
+            # windows 会爆炸
+#            targetabspath = os.path.abspath(targetpath)
+#            if targetabspath != os.path.abspath(filepath):
+#                targetrelpath = os.path.relpath(targetabspath, file_parent_origin_path)
+#                os.symlink(targetrelpath, filepath + '#sym')
         sub_res = conf.sub_rule()
 
         for subname in sub_res:
@@ -482,7 +485,7 @@ def paste_file_to_folder(movie: Movie, filepath, path,
         print('[-]move to the root folder of the program.')
         return
     except PermissionError:
-        print('[-]Error! Please run as administrator!')
+        logger.error('Please run as administrator!', exc_info=True)
         return
 
 
@@ -526,16 +529,16 @@ def get_part(filepath, failed_folder) -> str:
         return ''
 
 
-def core_main(file_path, number_th, conf: Config):
+def core_main(files:list[str], movie_id: str, conf: Config):
     # =======================================================================初始化所需变量
     part = ''
     leak_word = ''
     c_word = ''
     cn_sub = ''
 
-    filepath = file_path  # 影片的路径 绝对路径
+    filepath = files[0]  # 影片的路径 绝对路径
 
-    movie = get_data_from_json(number_th, filepath)  # 定义番号
+    movie = get_data_from_json(movie_id, files[0])  # 定义番号
 
     # Return if blank dict returned (data not found)
     if not movie.is_filled():
@@ -598,7 +601,7 @@ def core_main(file_path, number_th, conf: Config):
             pass
         # 裁剪图
         cutImage(movie, path)
-        # 打印文件
+        # 打印NFO文件
         write_movie_nfo(movie, path)
 
         # 移动文件
@@ -609,45 +612,12 @@ def core_main(file_path, number_th, conf: Config):
         if conf.is_watermark():
             add_mark(poster_path, thumb_path, cn_sub, leak, uncensored, conf)
 
-    elif conf.main_mode() == 2:
-        # 创建文件夹
-        path = create_folder(movie, conf)
-        # 移动文件
-        paste_file_to_folder_mode2(movie, filepath, path, conf)
-        poster_path = path + '/' + movie.storage_fname + '-poster.jpg'
-        thumb_path = path + '/' + movie.storage_fname + '-thumb.jpg'
-        if conf.is_watermark():
-            add_mark(poster_path, thumb_path, cn_sub, leak, uncensored, conf)
+        for f in files[1:]:
+            #暴力。。先解决了再说
+            logger.debug(f'Moving extra part {f}')
+            new_part = get_part(f, conf.failed_folder())
+            movie.fname_postfix = leak_word + c_word + new_part
+            paste_file_to_folder(movie, f, path, conf)
 
-    elif conf.main_mode() == 3:
-        path = file_path.rsplit('/', 1)[0]
-        path = path.rsplit('\\', 1)[0]
-
-        # 检查小封面, 如果image cut为3，则下载小封面
-        if imagecut == 3:
-            small_cover_check(movie, path, movie.cover_small, conf,
-                              filepath, conf.failed_folder())
-
-        # creatFolder会返回番号路径
-        image_download(movie, path, conf, filepath, conf.failed_folder())
-
-        # 下载预告片
-        if movie.trailer:
-            trailer_download(movie, path, filepath, conf,
-                             conf.failed_folder())
-
-        # 下载剧照 data, path, conf: Config, filepath, failed_folder
-        if movie.extra_fanart:
-            extrafanart_download(movie.extra_fanart, path, conf, filepath,
-                                 conf.failed_folder())
-
-        # 裁剪图
-        cutImage(movie, path)
-
-        # 打印文件
-        write_movie_nfo(movie, path)
-
-        poster_path = path + '/' + movie.storage_fname + '-poster.jpg'
-        thumb_path = path + '/' + movie.storage_fname + '-thumb.jpg'
-        if conf.is_watermark():
-            add_mark(poster_path, thumb_path, cn_sub, leak, uncensored, conf)
+    else:
+        logger.critical('Unimplemented mode')

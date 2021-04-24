@@ -5,17 +5,18 @@ import re
 import shutil
 import sys
 import time
+from collections import defaultdict
 from pathlib import Path
-from avdc.util.logging_config import get_logger
-from avdc.util.tag_processor import debug_unknown_tags
-from avdc.util.logging_config import config_logging
 
 from avdc.ADC_function import get_html
 from avdc.config import Config
 from avdc.core import core_main
 from avdc.number_parser import get_number
 from avdc.util.file_mgmt import (create_success_failed_folder, dir_picker,
-                            rm_empty_success_failed_folder)
+                                 rm_empty_success_failed_folder)
+from avdc.util.logging_config import config_logging, get_logger
+from avdc.util.tag_processor import debug_unknown_tags
+
 
 logger = get_logger('avdc.main')
 
@@ -73,18 +74,25 @@ def argparse_function(ver: str) -> [str, str, bool]:
     return args.file, args.path, args.config, args.number, args.autoexit
 
 
-def movie_lists(root, escape_folder):
+def movie_lists(conf:Config, root, escape_folder, total = None) -> dict[str, list[str]]:
     if os.path.basename(root) in escape_folder:
-        return []
-    total = []
+        return {}
+    if not total:
+        total = defaultdict(list)
     file_type = conf.media_type().upper().split(",")
+
     dirs = os.listdir(root)
     for entry in dirs:
         f = os.path.join(root, entry)
         if os.path.isdir(f):
-            total += movie_lists(f, escape_folder)
+            movie_lists(conf, f, escape_folder, total)
         elif os.path.splitext(f)[1].upper() in file_type:
-            total.append(os.path.abspath(f))
+            fname = os.path.basename(f)
+            movie_id = get_number(conf.debug(), fname)
+            if not movie_id:
+                logger.warning(f'文件ID查找失败: {f}')
+            else:
+                total[movie_id].append(os.path.abspath(f))
     return total
 
 
@@ -98,42 +106,24 @@ def rm_empty_folder(path):
         pass
 
 
-def create_data_and_move(file_path: str, c: Config, debug):
+def create_data_and_move(movies: tuple[str, list[str]], c: Config):
     # Normalized number, eg: 111xxx-222.mp4 -> xxx-222.mp4
-    n_number = get_number(debug, os.path.basename(file_path))
-    file_path = os.path.abspath(file_path)
+    movie_id, files = movies
+    files.sort()
 
-    if debug == True:
-        print("[!]Making Data for [{}], the number is [{}]".format(
-            file_path, n_number))
-        core_main(file_path, n_number, c)
-        print("[*]======================================================")
+    if c.debug() == True:
+        logger.attn(f'[!]Making Data for [{files[0]}], the number is [{movie_id}]')
+        core_main(files, movie_id, c)
+        logger.info('======================================================')
     else:
         try:
-            print("[!]Making Data for [{}], the number is [{}]".format(
-                file_path, n_number))
-            core_main(file_path, n_number, c)
-            print("[*]======================================================")
+            logger.attn(f'[!]Making Data for [{files[0]}], the number is [{movie_id}]')
+            core_main(files, movie_id, c)
+            logger.info('======================================================')
         except Exception as err:
-            print("[-] [{}] ERROR:".format(file_path))
-            print('[-]', err)
+            logger.error('[-] [{files[0]}] ERROR:')
+            logger.error(err)
 
-            # 3.7.2 New: Move or not move to failed folder.
-            if c.failed_move() == False:
-                if c.soft_link():
-                    print("[-]Link {} to failed folder".format(file_path))
-                    os.symlink(file_path, conf.failed_folder() + "/")
-            elif c.failed_move() == True:
-                if c.soft_link():
-                    print("[-]Link {} to failed folder".format(file_path))
-                    os.symlink(file_path, conf.failed_folder() + "/")
-                else:
-                    try:
-                        print(
-                            "[-]Move [{}] to failed folder".format(file_path))
-                        shutil.move(file_path, conf.failed_folder() + "/")
-                    except Exception as err:
-                        print('[!]', err)
 
 
 def create_data_and_move_with_custom_number(file_path: str,
@@ -199,18 +189,18 @@ if __name__ == '__main__':
         create_data_and_move_with_custom_number(single_file_path, conf,
                                                 custom_number)
     else:
-        movie_list = movie_lists(folder_path,
+        movie_list = movie_lists(conf, folder_path,
                                  re.split("[,，]", conf.escape_folder()))
 
         count = 0
         count_all = str(len(movie_list))
         logger.attn(f'Find {count_all} movies')
-        for movie_path in movie_list:  # 遍历电影列表 交给core处理
+        for movie_path in movie_list.items():  # 遍历电影列表 交给core处理
             count = count + 1
             percentage = str(count / int(count_all) * 100)[:4] + '%'
             print('[!] - ' + percentage + ' [' + str(count) + '/' + count_all +
                   '] -')
-            create_data_and_move(movie_path, conf, conf.debug())
+            create_data_and_move(movie_path, conf)
             # 休息几秒，防封
             time.sleep(conf.sleep_between_movie())
 
